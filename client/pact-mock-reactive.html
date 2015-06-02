@@ -1,0 +1,81 @@
+<head>
+  <title>pact-mock-reactive</title>
+  <!--link rel="shortcut icon" href="pact-mock-reactive.ico"-->
+</head>
+
+<body>
+  <h1>Pack Mock Reactive UI</h1>
+
+  <div class="ui fluid styled accordion">
+  {{#each interactions}}
+    {{> interaction}}
+  {{/each}}
+  </div>
+
+</body>
+
+<template name="interaction">
+    <div class="ui icon buttons right floated">
+      <div class="ui basic button" id="toggleInteraction">
+        <i class="{{#if disabledHelper}}play{{else}}ban{{/if}} icon"></i>
+      </div>
+      <div class="ui basic button" id="removeInteraction">
+        <i class="remove icon"></i>
+      </div>
+    </div>
+
+    <div class="title">
+      <div class="ui label {{#if receivedHelper}}green{{else}}red{{/if}}">{{countHelper}}</div>
+      <span class="{{#if receivedHelper}}green{{else}}red{{/if}}">
+      <i class="dropdown icon"></i>
+        {{interaction.request.method}} {{interaction.request.path}} {{interaction.request.query}}
+      </span>
+    </div>
+
+    <div class="content">
+      <p><b>{{consumer}} - {{provider}}:</b> {{interaction.description}}</p>
+
+      <div class="ui two column grid">
+        <div class="column" style="word-wrap: break-word">
+          <div class="ui raised segment">
+            <div class="ui left black corner label">
+              <i class="share icon"></i>
+            </div>
+            <div class="ui divided list">
+              <div class="item">
+                <i class="mail outline icon"></i>
+                <div class="content">
+                  <div class="description">{{jsonHelper interaction.request.headers '[no headers]'}}</div>
+                </div>
+              </div>
+              <div class="item">
+                <div class="content">
+                  <div class="description">{{jsonHelper interaction.request.body '[empty body]'}}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="column" style="word-wrap: break-word">
+          <div class="ui segment">
+            <div class="ui blue corner label">
+              <i class="reply icon"></i></div>
+            <div class="ui divided list">
+              <div class="item">
+                <i class="mail outline icon"></i>
+                <div class="content">
+                  <div class="description">{{jsonHelper interaction.response.headers '[no headers]'}}</div>
+                </div>
+              </div>
+              <div class="item">
+                <div class="content">
+                  <div class="description">{{jsonHelper interaction.response.body '[empty body]'}}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+</template>
