@@ -96,7 +96,7 @@ var writePact = function (req, res) {
             if (err) {
                 res.end(JSON.stringify({"message": "Error ocurred in mock service: RuntimeError - pact file couldn't be saved"}));
             } else {
-                res.end(path + " " + JSON.stringify(pact));                
+                res.end(JSON.stringify(pact));                
             }
         });
     } else {
