@@ -4,8 +4,22 @@
 </head>
 
 <body>
-  <h1>Pack Mock Reactive UI</h1>
-
+<br/>
+  <div class="ui grid">
+    <div class="one wide column"></div>
+    <div class="eleven wide column"><h1>Pack Mock Reactive UI</h1></div>
+    <div class="four wide column">
+      <div class="ui purple button" id="resetbutton">
+        <i class="recycle icon"></i>
+        Reset All
+      </div>
+      <div class="ui red button" id="clearbutton">
+        <i class="erase icon"></i>
+        Delete All
+      </div>
+    </div>
+  </div>
+<br/>
   <div class="ui fluid styled accordion">
   {{#each interactions}}
     {{> interaction}}
@@ -28,7 +42,7 @@
       <div class="ui label {{#if receivedHelper}}green{{else}}red{{/if}}">{{countHelper}}</div>
       <span class="{{#if receivedHelper}}green{{else}}red{{/if}}">
       <i class="dropdown icon"></i>
-        {{interaction.request.method}} {{interaction.request.path}} {{interaction.request.query}}
+        {{interaction.request.method}} {{interaction.request.path}} {{jsonHelper interaction.request.query ''}}
       </span>
     </div>
 

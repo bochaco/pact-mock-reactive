@@ -13,6 +13,15 @@ Template.body.helpers({
   }
 });
 
+Template.body.events({
+  'click #resetbutton': function () {
+    Meteor.call("resetInteractions");
+  },
+  'click #clearbutton': function () {
+    Meteor.call("clearInteractions");
+  }
+});
+
 Template.interaction.helpers({
   receivedHelper: function () {
     return this.count === 0;

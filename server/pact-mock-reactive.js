@@ -5,6 +5,13 @@ Meteor.startup(function () {
 });
 
 Meteor.methods({
+  resetInteractions: function () {
+    Interactions.update({count: {$gte: 0}}, {$set : {count: 1}});
+    Interactions.remove({count: {$lt: 0}});
+  },
+  clearInteractions: function () {
+    Interactions.remove({});
+  }    
 });
 
 var registerInteraction = function (req, res) {
@@ -104,33 +111,57 @@ var writePact = function (req, res) {
     }
 }
 
+var isObjContained = function(obj1, obj2, twoway) {
+    var result = true;
+    for (var prop in obj1) {
+        if (typeof obj2[prop] == 'undefined') {
+            return false;
+        }
+
+        if (typeof obj2[prop] == 'object') {
+            if (! isObjContained(prop, obj2[prop])) {
+                return false;
+            }
+        }
+
+        if (obj1[prop] != obj2[prop]) {
+            return false;
+        }
+    }
+    if (twoway) {
+        result = isObjContained(obj2, obj1, false);
+    }
+    return result;
+}
+
 var requestsHandler = function (method, path, query, req, res) {
     var selector = {
         'interaction.request.method': method.toLowerCase(), 
         'interaction.request.path': path,
         disabled: false
     }
-    var matchingInteraction = Interactions.find(selector).fetch();
+    var matchingInteractions = Interactions.find(selector).fetch();
     var done = false;
     var err = {
-        "message": "No interaction found for " + method + " " + path,
+        "message": "No interaction found for " + method + " " + path + " " + JSON.stringify(query),
         "interaction_diffs": []
     }
 
-    if (matchingInteraction.length > 1) { // this shouldn't occur
+    if (matchingInteractions.length > 1) { // this shouldn't occur
         err.message = "Multiple interaction found for " + method + " " + path;
-        for (var index in matchingInteraction) {
+        for (var index in matchingInteractions) {
             err.interaction_diffs.push( { 
-                description: matchingInteraction[index].interaction.description,
-                request: matchingInteraction[index].interaction.request
+                description: matchingInteractions[index].interaction.description,
+                request: matchingInteractions[index].interaction.request
             });
         }
         res.writeHead(500, {'Content-Type': 'application/json'});
         res.end(JSON.stringify(err));
         done = true;
     }
-    else if (matchingInteraction.length === 1) {
-        var matchingHeaders = matchingInteraction[0].interaction.request.headers;
+    else if (matchingInteractions.length === 1) {
+        // compare headers of actual and expected
+        var matchingHeaders = matchingInteractions[0].interaction.request.headers;
         for (var key in matchingHeaders) { // iterate thru expected headers to make sure it's in the actual header
             var actualHdr = req.headers[String(key).toLowerCase()];
             if (!actualHdr || actualHdr !== matchingHeaders[key]) {
@@ -143,12 +174,21 @@ var requestsHandler = function (method, path, query, req, res) {
             }
         }
 
-        // verification of body is missing
-        // verification of query is missing
+        // compare query of actual and expected
+        if (false == isObjContained(matchingInteractions[0].interaction.request.query, req.query, true)) {
+            err.interaction_diffs.push( {
+                "query": {
+                    "expected": matchingInteractions[0].interaction.request.query,
+                    "actual": req.query
+                }
+            });            
+        }
+
+        /** TODO verification of body is missing  **/
 
         if (err.interaction_diffs.length === 0) {
-            Interactions.update({_id: matchingInteraction[0]._id}, {$inc: {count: -1} });
-            var expectedResponse = matchingInteraction[0].interaction.response;
+            Interactions.update({_id: matchingInteractions[0]._id}, {$inc: {count: -1} });
+            var expectedResponse = matchingInteractions[0].interaction.response;
             res.writeHead(expectedResponse.status, expectedResponse.headers);
             res.end(JSON.stringify(expectedResponse.body));
             done = true;
@@ -218,5 +258,5 @@ Router.route('/pact', { where: 'server' })
     });
 
 Router.route('(.+)', function () {
-    requestsHandler(this.method, this.url, this.params.query, this.request, this.response);
+    requestsHandler(this.method, "/" + this.params, this.params.query, this.request, this.response);
 }, { where: 'server'});
