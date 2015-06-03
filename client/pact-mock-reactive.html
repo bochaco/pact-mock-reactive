@@ -67,7 +67,7 @@
                 <div class="content">
                   <div class="description">
                     <div class="ui pointing right label">Headers</div>
-                    {{jsonHelper interaction.request.headers '[no headers]'}}
+                    {{jsonHelper interaction.request.headers '[]'}}
                   </div>
                 </div>
               </div>
@@ -75,7 +75,7 @@
                 <div class="content">
                   <div class="description">
                     <div class="ui pointing right label">Body</div>
-                    {{jsonHelper interaction.request.body '[empty body]'}}
+                    {{jsonHelper interaction.request.body '[]'}}
                   </div>
                 </div>
               </div>
@@ -92,7 +92,7 @@
                 <div class="content">
                   <div class="description">
                     <div class="ui pointing right label">Headers</div>
-                    {{jsonHelper interaction.response.headers '[no headers]'}}
+                    {{jsonHelper interaction.response.headers '[]'}}
                   </div>
                 </div>
               </div>
@@ -100,7 +100,7 @@
                 <div class="content">
                   <div class="description">
                     <div class="ui pointing right label">Body</div>
-                    {{jsonHelper interaction.response.body '[empty body]'}}
+                    {{jsonHelper interaction.response.body '[]'}}
                   </div>
                 </div>
               </div>
