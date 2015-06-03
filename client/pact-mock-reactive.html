@@ -7,7 +7,14 @@
 <br/>
   <div class="ui grid">
     <div class="one wide column"></div>
-    <div class="eleven wide column"><h1>Pack Mock Reactive UI</h1></div>
+    <div class="eleven wide column">
+      <h2 class="ui header">
+        <i class="spy icon"></i>
+        <div class="content">
+          Pack Mock Reactive UI
+        </div>
+      </h2>
+    </div>
     <div class="four wide column">
       <div class="ui purple button" id="resetbutton">
         <i class="recycle icon"></i>
@@ -51,20 +58,25 @@
 
       <div class="ui two column grid">
         <div class="column" style="word-wrap: break-word">
-          <div class="ui raised segment">
-            <div class="ui left black corner label">
-              <i class="share icon"></i>
+          <div class="ui segment">
+            <div class="ui right ribbon black label">
+              <i class="mail outline icon"></i>Request
             </div>
             <div class="ui divided list">
               <div class="item">
-                <i class="mail outline icon"></i>
                 <div class="content">
-                  <div class="description">{{jsonHelper interaction.request.headers '[no headers]'}}</div>
+                  <div class="description">
+                    <div class="ui pointing right label">Headers</div>
+                    {{jsonHelper interaction.request.headers '[no headers]'}}
+                  </div>
                 </div>
               </div>
               <div class="item">
                 <div class="content">
-                  <div class="description">{{jsonHelper interaction.request.body '[empty body]'}}</div>
+                  <div class="description">
+                    <div class="ui pointing right label">Body</div>
+                    {{jsonHelper interaction.request.body '[empty body]'}}
+                  </div>
                 </div>
               </div>
             </div>
@@ -72,18 +84,24 @@
         </div>
         <div class="column" style="word-wrap: break-word">
           <div class="ui segment">
-            <div class="ui blue corner label">
-              <i class="reply icon"></i></div>
+            <div class="ui right ribbon blue label">
+              <i class="mail outline icon"></i>Response
+            </div>
             <div class="ui divided list">
               <div class="item">
-                <i class="mail outline icon"></i>
                 <div class="content">
-                  <div class="description">{{jsonHelper interaction.response.headers '[no headers]'}}</div>
+                  <div class="description">
+                    <div class="ui pointing right label">Headers</div>
+                    {{jsonHelper interaction.response.headers '[no headers]'}}
+                  </div>
                 </div>
               </div>
               <div class="item">
                 <div class="content">
-                  <div class="description">{{jsonHelper interaction.response.body '[empty body]'}}</div>
+                  <div class="description">
+                    <div class="ui pointing right label">Body</div>
+                    {{jsonHelper interaction.response.body '[empty body]'}}
+                  </div>
                 </div>
               </div>
             </div>
