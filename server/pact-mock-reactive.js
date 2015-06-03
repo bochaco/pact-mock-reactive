@@ -258,5 +258,10 @@ Router.route('/pact', { where: 'server' })
     });
 
 Router.route('(.+)', function () {
-    requestsHandler(this.method, "/" + this.params, this.params.query, this.request, this.response);
+	if(this.url === '/favicon.ico') {
+		this.response.writeHead(200, {'Content-Type': 'application/json'})
+		this.response.end();
+	} else {
+		requestsHandler(this.method, "/" + this.params, this.params.query, this.request, this.response);
+	}
 }, { where: 'server'});
