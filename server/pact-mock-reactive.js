@@ -1,4 +1,4 @@
-Interactions = new Mongo.Collection("interactions");
+Interactions = new Mongo.Collection('interactions');
 
 Meteor.startup(function () {
   // code to run on server at startup
@@ -14,7 +14,12 @@ Meteor.methods({
   }    
 });
 
-var registerInteraction = function (req, res) {
+var fs = Npm.require('fs'),
+	appRoot = fs.realpathSync('.');
+// find better way	
+appRoot = appRoot.indexOf('.meteor') >= 0 ? appRoot.substring(0, appRoot.indexOf('.meteor')) : appRoot;
+
+var	registerInteraction = function (req, res) {
     var selector = {
         'interaction.request.method': req.body.request.method, 
         'interaction.request.path': req.body.request.path,
@@ -23,12 +28,12 @@ var registerInteraction = function (req, res) {
     }
     var matchingInteraction = Interactions.findOne(selector);
     
-    var consumerName = req.headers["x-pact-consumer"];
-    var providerName = req.headers["x-pact-provider"];
+    var consumerName = req.headers['x-pact-consumer'];
+    var providerName = req.headers['x-pact-provider'];
     if (matchingInteraction) {
         if (consumerName != matchingInteraction.consumer || providerName != matchingInteraction.provider) {
             res.writeHead(500, { 'Content-Type': 'text/plain' });
-            res.end("The interaction is already registered but against a different pair of consumer-provider");
+            res.end('The interaction is already registered but against a different pair of consumer-provider');
         } else {
             Interactions.update({ _id: matchingInteraction._id }, { $inc: { count: 1 } });
         }
@@ -43,33 +48,33 @@ var registerInteraction = function (req, res) {
         Interactions.insert(newInteraction);
     }
     res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end("Set interactions for " + consumerName + '-' + providerName);
+    res.end('Set interactions for ' + consumerName + '-' + providerName);
 },
     verifyInteractions = function (res) {
         var unexpectedReqs = Interactions.find({ count: { $lt: 0 }, disabled: false }).fetch();
         var missingReqs = Interactions.find({ count: { $gt: 0 }, disabled: false }).fetch();
         if (missingReqs.length === 0 && unexpectedReqs.length === 0) {
             res.writeHead(200, { 'Content-Type': 'text/plain' });
-            res.end("Interactions matched");
+            res.end('Interactions matched');
         } else {
             res.writeHead(500, { 'Content-Type': 'text/plain' });
-            var resText = "Actual interactions do not match expected interactions for mock MockService.\n";
+            var resText = 'Actual interactions do not match expected interactions for mock MockService.\n';
             if (missingReqs.length > 0) {
-                resText += "\nMissing requests:\n";
+                resText += '\nMissing requests:\n';
                 for (var index in missingReqs) {
-                    resText += "\t" + missingReqs[index].consumer + "-" + missingReqs[index].provider + ": ";
-                    resText += missingReqs[index].interaction.request.method.toUpperCase() + " ";
+                    resText += '\t' + missingReqs[index].consumer + '-' + missingReqs[index].provider + ': ';
+                    resText += missingReqs[index].interaction.request.method.toUpperCase() + ' ';
                     resText += missingReqs[index].interaction.request.path;
-                    resText += " (" + missingReqs[index].count + " missing request/s)\n";
+                    resText += ' (' + missingReqs[index].count + ' missing request/s)\n';
                 }
             }
             if (unexpectedReqs.length > 0) {
-                resText += "\nUnexpected requests:\n";
+                resText += '\nUnexpected requests:\n';
                 for (var index in unexpectedReqs) {
-                    resText += "\t" + unexpectedReqs[index].consumer + "-" + unexpectedReqs[index].provider + ": ";
-                    resText += unexpectedReqs[index].interaction.request.method.toUpperCase() + " ";
+                    resText += '\t' + unexpectedReqs[index].consumer + '-' + unexpectedReqs[index].provider + ': ';
+                    resText += unexpectedReqs[index].interaction.request.method.toUpperCase() + ' ';
                     resText += unexpectedReqs[index].interaction.request.path;
-                    resText += " (" + (-1 * unexpectedReqs[index].count) + " unexpected request/s)\n";
+                    resText += ' (' + (-1 * unexpectedReqs[index].count) + ' unexpected request/s)\n';
                 }
             }
             res.end(resText);
@@ -91,21 +96,21 @@ var registerInteraction = function (req, res) {
             }
             
             pact.metadata = {
-                "pactSpecificationVersion": "1.0.0"
+                'pactSpecificationVersion': '1.0.0'
             }
             
-            var filename = (req.body.consumer.name.toLowerCase() + '-' + req.body.provider.name.toLowerCase()).replace(/\s/g, "_");
-            var path = process.env.PWD + "/pacts/" + filename + ".json";
-            fs = Npm.require('fs');
+            var filename = (req.body.consumer.name.toLowerCase() + '-' + req.body.provider.name.toLowerCase()).replace(/\s/g, '_'),
+				path = appRoot + 'pacts/' + filename + '.json';
+            
             fs.writeFile(path, JSON.stringify(pact), function (err) {
                 if (err) {
-                    res.end(JSON.stringify({ "message": "Error ocurred in mock service: RuntimeError - pact file couldn't be saved" }));
+                    res.end(JSON.stringify({ 'message': 'Error ocurred in mock service: RuntimeError - pact file couldn\'t be saved' }));
                 } else {
                     res.end(JSON.stringify(pact));
                 }
             });
         } else {
-            res.end(JSON.stringify({ "message": "Error ocurred in mock service: RuntimeError - You must specify a consumer and provider name" }));
+            res.end(JSON.stringify({ 'message': 'Error ocurred in mock service: RuntimeError - You must specify a consumer and provider name' }));
         }
     },
     isObjContained = function (obj1, obj2, twoway) {
@@ -139,12 +144,12 @@ var registerInteraction = function (req, res) {
         var matchingInteractions = Interactions.find(selector).fetch();
         var done = false;
         var err = {
-            "message": "No interaction found for " + method + " " + path + " " + JSON.stringify(query),
-            "interaction_diffs": []
+            'message': 'No interaction found for ' + method + ' ' + path + ' ' + JSON.stringify(query),
+            'interaction_diffs': []
         }
         
         if (matchingInteractions.length > 1) { // this shouldn't occur
-            err.message = "Multiple interaction found for " + method + " " + path;
+            err.message = 'Multiple interaction found for ' + method + ' ' + path;
             for (var index in matchingInteractions) {
                 err.interaction_diffs.push({
                     description: matchingInteractions[index].interaction.description,
@@ -162,9 +167,9 @@ var registerInteraction = function (req, res) {
                 var actualHdr = req.headers[String(key).toLowerCase()];
                 if (!actualHdr || actualHdr !== matchingHeaders[key]) {
                     err.interaction_diffs.push({
-                        "headers": {
-                            "expected": { key: key, value: matchingHeaders[key] },
-                            "actual": { key: key, value: actualHdr }
+                        'headers': {
+                            'expected': { key: key, value: matchingHeaders[key] },
+                            'actual': { key: key, value: actualHdr }
                         }
                     });
                 }
@@ -173,9 +178,9 @@ var registerInteraction = function (req, res) {
             // compare query of actual and expected
             if (false == isObjContained(matchingInteractions[0].interaction.request.query, req.query, true)) {
                 err.interaction_diffs.push({
-                    "query": {
-                        "expected": matchingInteractions[0].interaction.request.query,
-                        "actual": req.query
+                    'query': {
+                        'expected': matchingInteractions[0].interaction.request.query,
+                        'actual': req.query
                     }
                 });
             }
@@ -193,8 +198,8 @@ var registerInteraction = function (req, res) {
         
         if (!done) {   // this is an unexpected interaction
             var newInteraction = {
-                consumer: "UNEXPECTED",
-                provider: "UNEXPECTED",
+                consumer: 'UNEXPECTED',
+                provider: 'UNEXPECTED',
                 count: -1,
                 interaction: {
                     request: {
@@ -214,7 +219,7 @@ var registerInteraction = function (req, res) {
     },
     routeInteractions = function (route) {
         var headers = route.request.headers;
-        if (headers["x-pact-mock-service"] === "true") {
+        if (headers['x-pact-mock-service'] === 'true') {
             registerInteraction(route.request, route.response);
         } else {
             requestsHandler(route.method, route.url, route.params.query, route.request, route.response);
@@ -222,13 +227,13 @@ var registerInteraction = function (req, res) {
     },
 	routePact = function (route) {
         var headers = route.request.headers;
-        if (headers["x-pact-mock-service"] === "true") {
+        if (headers['x-pact-mock-service'] === 'true') {
             writePact(route.request, route.response);
         } else {
             requestsHandler(route.method, route.url, route.params.query, route.request, route.response);
         }
     };
-
+	
 Router.route('/interactions', { where: 'server' })
     .post(function () {
         routeInteractions(this);
@@ -238,10 +243,10 @@ Router.route('/interactions', { where: 'server' })
     })
     .delete(function () {
         var headers = this.request.headers;
-        if (headers["x-pact-mock-service"] === "true") {
+        if (headers['x-pact-mock-service'] === 'true') {
             Interactions.remove({});
             this.response.writeHead(200, {'Content-Type': 'text/plain'});
-            this.response.end("Deleted interactions");
+            this.response.end('Deleted interactions');
         } else {
             requestsHandler(this.method, this.url, this.params.query, this.request, this.response);
         }
@@ -250,7 +255,7 @@ Router.route('/interactions', { where: 'server' })
 Router.route('/interactions/verification', { where: 'server' })
     .get(function () {
         var headers = this.request.headers;
-        if (headers["x-pact-mock-service"] === "true") {
+        if (headers['x-pact-mock-service'] === 'true') {
             verifyInteractions(this.response);
         } else {
             requestsHandler(this.method, this.url, this.params.query, this.request, this.response);
@@ -270,6 +275,6 @@ Router.route('(.+)', function () {
 		this.response.writeHead(200, {'Content-Type': 'application/json'})
 		this.response.end();
 	} else {
-		requestsHandler(this.method, "/" + this.params, this.params.query, this.request, this.response);
+		requestsHandler(this.method, '/' + this.params, this.params.query, this.request, this.response);
 	}
 }, { where: 'server'});
