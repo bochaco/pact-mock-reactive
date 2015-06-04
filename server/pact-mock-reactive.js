@@ -64,8 +64,9 @@ var fs = Npm.require('fs'),
             // compare headers of actual and expected
             // iterate thru expected headers to make sure it's in the actual header
             _.each(matchingInteraction.interaction.request.headers, function (value, key) {
-                var actualHdr = headers[String(key).toLowerCase()];
-                if (!actualHdr || actualHdr !== value) {
+                var actualHdr = headers[key], // when comparing headers defined in the pact interaction
+                    actualHdrLower = headers[String(key).toLowerCase()]; // when comparing with actual HTTP headers
+                if ( (!actualHdr || actualHdr !== value) && (!actualHdrLower || actualHdrLower !== value) ) {
                     innerErr.push({
                         'headers': {
                             'expected': { key: key, value: value },
@@ -138,9 +139,14 @@ var fs = Npm.require('fs'),
             };
         findInteraction(interaction, successCallback, errorCallback);
     },
-    verifyInteractions = function (res) {
-        var unexpectedReqs = Interactions.find({ count: { $lt: 0 }, disabled: false }).fetch(),
-            missingReqs = Interactions.find({ count: { $gt: 0 }, disabled: false }).fetch(),
+    verifyInteractions = function (req, res) {
+        var missingReqs = Interactions.find({
+                consumer: req.headers['x-pact-consumer'],
+                provider: req.headers['x-pact-provider'],
+                count: { $gt: 0 },
+                disabled: false
+            }).fetch(),
+            unexpectedReqs = Interactions.find({ count: { $lt: 0 }, disabled: false }).fetch(),
             resText;
         if (missingReqs.length === 0 && unexpectedReqs.length === 0) {
             res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -271,7 +277,7 @@ Router.route('/interactions/verification', { where: 'server' })
     .get(function () {
         var headers = this.request.headers;
         if (headers['x-pact-mock-service'] === 'true') {
-            verifyInteractions(this.response);
+            verifyInteractions(this.request, this.response);
         } else {
             requestsHandler(this.method, this.url, this.params.query, this.request, this.response);
         }
