@@ -206,7 +206,8 @@ var fs = Npm.require('fs'),
                 method : method,
                 path : path,
                 query : query,
-                req : req
+                headers : req.headers,
+                body : req.body
             },
             successCallback = function (selectedInteraction) {
                 var expectedResponse = selectedInteraction.interaction.response;
