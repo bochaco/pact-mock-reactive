@@ -4,10 +4,11 @@
 </head>
 
 <body>
-<br/>
+
+  <br/>
   <div class="ui grid">
     <div class="one wide column"></div>
-    <div class="eleven wide column">
+    <div class="ten wide column">
       <h2 class="ui header">
         <i class="spy icon"></i>
         <div class="content">
@@ -15,7 +16,11 @@
         </div>
       </h2>
     </div>
-    <div class="four wide column">
+    <div class="five wide column">
+      <div class="ui yellow button" id="pactsbutton">
+        <i class="legal icon"></i>
+        Pacts
+      </div>
       <div class="ui purple button" id="resetbutton">
         <i class="recycle icon"></i>
         Reset All
@@ -26,11 +31,28 @@
       </div>
     </div>
   </div>
-<br/>
+  <br/>
+
   <div class="ui fluid styled accordion">
   {{#each interactions}}
     {{> interaction}}
   {{/each}}
+  </div>
+
+  <div class="ui long modal">
+    <i class="close icon"></i>
+    <div class="header">
+      Pacts
+    </div>
+    <div class="content">
+      <div class="description">
+        {{interactionsHelper}}
+      </div>
+    </div>
+    <div class="actions">
+      <div class="ui button">OK</div>
+      <div class="ui button">Save</div>
+    </div>
   </div>
 
 </body>

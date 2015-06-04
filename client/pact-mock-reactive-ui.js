@@ -5,11 +5,17 @@ Router.route('/', function () {});
 Meteor.startup(function () {
   // code to run on client at startup
   $('.ui.accordion').accordion({exclusive: false});
+  $('.ui.long.modal')
+      .modal('setting', 'transition', 'fade down')
+      .modal('setting', 'can fit', 'true');
 });
 
 Template.body.helpers({
   interactions: function () {
     return Interactions.find();
+  },
+  interactionsHelper: function () {
+    return JSON.stringify(Interactions.find().fetch());
   }
 });
 
@@ -19,6 +25,9 @@ Template.body.events({
   },
   'click #clearbutton': function () {
     Meteor.call("clearInteractions");
+  },
+  'click #pactsbutton': function () {
+    $('.ui.modal').modal('show');
   }
 });
 
