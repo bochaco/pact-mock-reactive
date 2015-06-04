@@ -1,4 +1,16 @@
-Interactions = new Mongo.Collection('interactions');
+var escapeMetaCharacters = function (string) {
+        return string.replace(/\$/g, '\\uff04').replace(/\./g, '\\uff0E');
+    },
+    unescapeMetaCharacters = function (string) {
+        return string.replace(/\uff04/g, '$').replace(/\uff0E/g, '.');
+    },
+    Interactions = new Mongo.Collection('interactions', {
+        transform: function (doc) {
+            //workaround for dots in the keys (problem with mongo)
+            doc.interaction = JSON.parse(unescapeMetaCharacters(JSON.stringify(doc.interaction)));
+            return doc;
+        }
+    });
 
 Meteor.startup(function () {
     // code to run on server at startup
@@ -15,41 +27,116 @@ Meteor.methods({
     }
 });
 
-var path = Npm.require('path'),
-    appRoot = path.resolve('.');
+var pathNpm = Npm.require('path'),
+    appRoot = pathNpm.resolve('.');
 // find better way
 appRoot = appRoot.indexOf('.meteor') >= 0 ? appRoot.substring(0, appRoot.indexOf('.meteor')) : appRoot;
 
 var fs = Npm.require('fs'),
-    registerInteraction = function (req, res) {
-        var selector = {
-                'interaction.request.method': req.body.request.method,
-                'interaction.request.path': req.body.request.path,
-                'interaction.request.query': req.body.request.query,
-                'interaction.request.headers': req.body.request.headers
+    insertInteraction = function (consumerName, providerName, interaction, count) {
+        //workaround for dots in the keys (problem with mongo)
+        interaction = JSON.parse(escapeMetaCharacters(JSON.stringify(interaction)));
+        Interactions.insert({
+            consumer: consumerName,
+            provider: providerName,
+            count: count || 1,
+            disabled: false,
+            interaction: interaction
+        });
+    },
+    findInteraction = function (interaction, successCallback, errorCallback) {
+        var method = interaction.method,
+            path = interaction.path,
+            query = interaction.query,
+            headers = interaction.headers,
+            body = interaction.body,
+            selector = {
+                'interaction.request.method': method.toLowerCase(),
+                'interaction.request.path': path,
+                disabled: false
             },
-            matchingInteraction = Interactions.findOne(selector),
-            consumerName = req.headers['x-pact-consumer'],
-            providerName = req.headers['x-pact-provider'];
+            selectedInteraction,
+            interactionDiffs = [],
+            innerErr;
 
-        if (matchingInteraction) {
-            if (consumerName !== matchingInteraction.consumer || providerName !== matchingInteraction.provider) {
-                res.writeHead(500, { 'Content-Type': 'text/plain' });
-                res.end('The interaction is already registered but against a different pair of consumer-provider');
-            } else {
-                Interactions.update({ _id: matchingInteraction._id }, { $inc: { count: 1 } });
+        _.each(Interactions.find(selector).fetch(), function (matchingInteraction) {
+            innerErr = [];
+            // compare headers of actual and expected
+            // iterate thru expected headers to make sure it's in the actual header
+            _.each(matchingInteraction.interaction.request.headers, function (value, key) {
+                var actualHdr = headers[String(key).toLowerCase()];
+                if (!actualHdr || actualHdr !== value) {
+                    innerErr.push({
+                        'headers': {
+                            'expected': { key: key, value: value },
+                            'actual': { key: key, value: actualHdr }
+                        }
+                    });
+                }
+            });
+
+            // compare query of actual and expected
+            if (!_.isEqual(matchingInteraction.interaction.request.query || {}, query || {})) {
+                innerErr.push({
+                    'query': {
+                        'expected': matchingInteraction.interaction.request.query,
+                        'actual': query
+                    }
+                });
             }
+
+            // compare body of actual and expected
+            if (!_.isEqual(matchingInteraction.interaction.request.body || {}, body || {})) {
+                innerErr.push({
+                    'body': {
+                        'expected': matchingInteraction.interaction.request.body,
+                        'actual': body
+                    }
+                });
+            }
+            if (innerErr.length === 0) {
+                selectedInteraction = matchingInteraction;
+            } else {
+                interactionDiffs.push(innerErr);
+            }
+        });
+        if (selectedInteraction) {
+            successCallback(selectedInteraction);
         } else {
-            Interactions.insert({
-                consumer: consumerName,
-                provider: providerName,
-                count: 1,
-                disabled: false,
-                interaction: req.body
+            errorCallback({
+                'message': 'No interaction found for ' + method + ' ' + path + ' ' + JSON.stringify(query),
+                'interaction_diffs': interactionDiffs
             });
         }
-        res.writeHead(200, { 'Content-Type': 'text/plain' });
-        res.end('Set interactions for ' + consumerName + '-' + providerName);
+    },
+    registerInteraction = function (req, res) {
+        var consumerName = req.headers['x-pact-consumer'],
+            providerName = req.headers['x-pact-provider'],
+            sendResponse = function () {
+                res.writeHead(200, { 'Content-Type': 'text/plain' });
+                res.end('Set interactions for ' + consumerName + '-' + providerName);
+            },
+            interaction = {
+                method : req.body.request.method,
+                path : req.body.request.path,
+                query : req.body.request.query,
+                headers : req.body.request.headers,
+                body : req.body.request.body
+            },
+            successCallback = function (matchingInteraction) {
+                if (consumerName !== matchingInteraction.consumer || providerName !== matchingInteraction.provider) {
+                    res.writeHead(500, { 'Content-Type': 'text/plain' });
+                    res.end('The interaction is already registered but against a different pair of consumer-provider');
+                } else {
+                    Interactions.update({ _id: matchingInteraction._id }, { $inc: { count: 1 } });
+                }
+                sendResponse();
+            },
+            errorCallback = function () {
+                insertInteraction(consumerName, providerName, req.body);
+                sendResponse();
+            };
+        findInteraction(interaction, successCallback, errorCallback);
     },
     verifyInteractions = function (res) {
         var unexpectedReqs = Interactions.find({ count: { $lt: 0 }, disabled: false }).fetch(),
@@ -115,73 +202,21 @@ var fs = Npm.require('fs'),
         }
     },
     requestsHandler = function (method, path, query, req, res) {
-        var selector = {
-                'interaction.request.method': method.toLowerCase(),
-                'interaction.request.path': path,
-                disabled: false
+        var interaction = {
+                method : method,
+                path : path,
+                query : query,
+                req : req
             },
-            matchingInteractions = Interactions.find(selector).fetch(),
-            selectedInteraction,
-            err = {
-                'message': 'No interaction found for ' + method + ' ' + path + ' ' + JSON.stringify(query),
-                'interaction_diffs': []
+            successCallback = function (selectedInteraction) {
+                var expectedResponse = selectedInteraction.interaction.response;
+                Interactions.update({ _id: selectedInteraction._id }, { $inc: { count: -1 } });
+                res.writeHead(expectedResponse.status, expectedResponse.headers);
+                res.end(JSON.stringify(expectedResponse.body));
             },
-            matchingHeaders,
-            expectedResponse;
-
-        _.each(matchingInteractions, function(matchingInteraction) {
-  
-            // compare headers of actual and expected
-            matchingHeaders = matchingInteraction.interaction.request.headers;
-            // iterate thru expected headers to make sure it's in the actual header
-            _.each(matchingHeaders, function (value, key) {
-                var actualHdr = req.headers[String(key).toLowerCase()];
-                if (!actualHdr || actualHdr !== value) {
-                    err.interaction_diffs.push({
-                        'headers': {
-                            'expected': { key: key, value: value },
-                            'actual': { key: key, value: actualHdr }
-                        }
-                    });
-                }
-            });
-
-            // compare query of actual and expected
-            if (!_.isEqual(matchingInteraction.interaction.request.query, req.query)) {
-                err.interaction_diffs.push({
-                    'query': {
-                        'expected': matchingInteraction.interaction.request.query,
-                        'actual': req.query
-                    }
-                });
-            }
-
-            // compare body of actual and expected
-            if (!_.isEqual(matchingInteraction.interaction.request.body, req.body)) {
-                err.interaction_diffs.push({
-                    'body': {
-                        'expected': matchingInteraction.interaction.request.body,
-                        'actual': req.body
-                    }
-                });
-            }
-            if (err.interaction_diffs.length === 0) {
-                selectedInteraction = matchingInteraction;
-            }
-        });
-
-        if (selectedInteraction) {
-            Interactions.update({ _id: selectedInteraction._id }, { $inc: { count: -1 } });
-            expectedResponse = selectedInteraction.interaction.response;
-            res.writeHead(expectedResponse.status, expectedResponse.headers);
-            res.end(JSON.stringify(expectedResponse.body));
-        } else {
-            // this is an unexpected interaction
-            Interactions.insert({
-                consumer: 'UNEXPECTED',
-                provider: 'UNEXPECTED',
-                count: -1,
-                interaction: {
+            errorCallback = function (err) {
+                // this is an unexpected interaction
+                insertInteraction('UNEXPECTED', 'UNEXPECTED', {
                     request: {
                         method: method.toLowerCase(),
                         path: path,
@@ -190,11 +225,11 @@ var fs = Npm.require('fs'),
                         body: req.body
                     },
                     reponse: {}
-                }
-            });
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(err));
-        }
+                }, -1);
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(err));
+            };
+        findInteraction(interaction, successCallback, errorCallback);
     },
     routeInteractions = function (route) {
         var headers = route.request.headers;

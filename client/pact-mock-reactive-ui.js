@@ -1,4 +1,16 @@
-Interactions = new Mongo.Collection("interactions");
+var escapeMetaCharacters = function (string) {
+        return string.replace(/\$/g, '\\uff04').replace(/\./g, '\\uff0E');
+    },
+    unescapeMetaCharacters = function (string) {
+        return string.replace(/\uff04/g, '$').replace(/\uff0E/g, '.');
+    },
+    Interactions = new Mongo.Collection('interactions', {
+        transform: function (doc) {
+            //workaround for dots in the keys (problem with mongo)
+            doc.interaction = JSON.parse(unescapeMetaCharacters(JSON.stringify(doc.interaction)));
+            return doc;
+        }
+    });
 
 Router.route('/', function () {});
 
