@@ -13,54 +13,29 @@ var escapeMetaCharacters = function (string) {
     }),
     pactsTree = function (obj, level) {
       var str = "",
-          current,
           tabs = Array(3*level).join("&nbsp;");
-      for (item in obj) {
-        current = obj[item];
-        if (typeof current === 'undefined' || current === null) {
-          str += tabs + "\"" + item + "\"<span class='black'> : null</span><br/>";
-        } else if (Array.isArray(current)) {
-          str += tabs + "\"" + item + "\"<span class='black'> : [</span><br/>";
-          for (i in current) {
+
+      _.each (obj, function (value, key) {
+        if (typeof value === 'undefined' || value === null) {
+          str += tabs + "\"" + key + "\"<span class='black'> : null</span><br/>";
+        } else if (Array.isArray(value)) {
+          str += tabs + "\"" + key + "\"<span class='black'> : [</span><br/>";
+          for (i in value) {
             str += tabs + tabs + "<span class='black'>{</span><br/>";
-            str += pactsTree(current[i], 2 + level);
+            str += pactsTree(value[i], 2 + level);
             str += tabs + tabs + "<span class='black'>}</span><br/>";
           }
           str += tabs + "<span class='black'>]</span><br/>";
-        } else if (typeof current === 'object') {
-          str += tabs + "\"" + item + "\"<span class='black'> : {</span><br/>";
-          str += pactsTree(current, 1 + level);
+        } else if (typeof value === 'object') {
+          str += tabs + "\"" + key + "\"<span class='black'> : {</span><br/>";
+          str += pactsTree(value, 1 + level);
           str += tabs + "<span class='black'>}</span><br/>";
         } else {
-          str += tabs + "\"" + item + "\"<span class='black'> : </span>\"" + current + "\"<br/>";
+          str += tabs + "\"" + key + "\"<span class='black'> : </span>\"" + value + "\"<br/>";
         }
-      }
-      return str;
-    },
-    createPact = function (consumer, provider) {
-      var interactions = Interactions.find({
-              consumer: consumer,
-              provider: provider,
-              disabled: false
-          }).fetch(),
-          pact = {
-              consumer: {
-                  name: consumer
-              },
-              provider: {
-                  name: provider
-              },
-              interactions: [],
-              metadata: {
-                pactSpecificationVersion: '1.0.0'
-              }
-          };
-
-      _.each(interactions, function (element) {
-          pact.interactions.push(element.interaction);
       });
 
-      return pact;
+      return str;
     };
 
 Router.route('/', function () {});
@@ -82,11 +57,39 @@ Template.body.helpers({
   },
   pacts: function () {
     var str = "",
-        pact = createPact("FM", "SMS");
+        pact;
+    var interactions = Interactions.find({
+            disabled: false
+        }).fetch(),
 
-    str += "<span class='black'>{</span><br/>";
-    str += pactsTree(pact, 1);
-    str += "<span class='black'>}</span><br/>";
+    pairs = _.groupBy(interactions, function (element) {
+                return element.consumer + "-" + element.provider;
+            });
+
+    _.each(pairs, function (value, key) {
+      str += "<span class='black'>" + key.toLowerCase().replace(/\s/g, '_') + ".json:</span><br/>";
+      pact = {
+          consumer: {
+              name: value[0].consumer
+          },
+          provider: {
+              name: value[0].provider
+          },
+          interactions: [],
+          metadata: {
+            pactSpecificationVersion: '1.0.0'
+          }
+      };
+
+      _.each(value, function (element) {
+          pact.interactions.push(element.interaction);
+      });
+
+      str += "<span class='black'>{</span><br/>";
+      str += pactsTree(pact, 1);
+      str += "<span class='black'>}</span><br/><br/>";
+    });
+
     return str;
   }
 });
