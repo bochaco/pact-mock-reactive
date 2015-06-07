@@ -11,7 +11,7 @@ var escapeMetaCharacters = function (string) {
             return doc;
         }
     }),
-    pactsTree = function (obj, level) {
+    objTree = function (obj, level) {
       var str = "",
           tabs = Array(3*level).join("&nbsp;");
 
@@ -22,13 +22,13 @@ var escapeMetaCharacters = function (string) {
           str += tabs + "\"" + key + "\"<span class='black'> : [</span><br/>";
           for (i in value) {
             str += tabs + tabs + "<span class='black'>{</span><br/>";
-            str += pactsTree(value[i], 2 + level);
+            str += objTree(value[i], 2 + level);
             str += tabs + tabs + "<span class='black'>}</span><br/>";
           }
           str += tabs + "<span class='black'>]</span><br/>";
         } else if (typeof value === 'object') {
           str += tabs + "\"" + key + "\"<span class='black'> : {</span><br/>";
-          str += pactsTree(value, 1 + level);
+          str += objTree(value, 1 + level);
           str += tabs + "<span class='black'>}</span><br/>";
         } else {
           str += tabs + "\"" + key + "\"<span class='black'> : </span>\"" + value + "\"<br/>";
@@ -86,7 +86,7 @@ Template.body.helpers({
       });
 
       str += "<span class='black'>{</span><br/>";
-      str += pactsTree(pact, 1);
+      str += objTree(pact, 1);
       str += "<span class='black'>}</span><br/><br/>";
     });
 
@@ -128,9 +128,24 @@ Template.interaction.helpers({
   disabledHelper: function () {
     return this.disabled;
   },
+  queryHelper: function (object) {
+    var str = "";
+    _.each(object, function(value, key) {
+      if (str.length) {
+        str += "&";
+      } else {
+        str += "/";
+      }
+      str += key + "=" + value;
+    });
+
+    return str;
+  },
   jsonHelper: function (object, str) {
     if (object) {
-      str = JSON.stringify(object);
+      str = "<span class='black'>{</span><br/>";
+      str += objTree(object, 1);
+      str += "<span class='black'>}</span>";
     }
     return str;
   }
