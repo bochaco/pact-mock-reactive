@@ -10,7 +10,58 @@ var escapeMetaCharacters = function (string) {
             doc.interaction = JSON.parse(unescapeMetaCharacters(JSON.stringify(doc.interaction)));
             return doc;
         }
-    });
+    }),
+    pactsTree = function (obj, level) {
+      var str = "",
+          current,
+          tabs = Array(3*level).join("&nbsp;");
+      for (item in obj) {
+        current = obj[item];
+        if (typeof current === 'undefined' || current === null) {
+          str += tabs + "\"" + item + "\"<span class='black'> : null</span><br/>";
+        } else if (Array.isArray(current)) {
+          str += tabs + "\"" + item + "\"<span class='black'> : [</span><br/>";
+          for (i in current) {
+            str += tabs + tabs + "<span class='black'>{</span><br/>";
+            str += pactsTree(current[i], 2 + level);
+            str += tabs + tabs + "<span class='black'>}</span><br/>";
+          }
+          str += tabs + "<span class='black'>]</span><br/>";
+        } else if (typeof current === 'object') {
+          str += tabs + "\"" + item + "\"<span class='black'> : {</span><br/>";
+          str += pactsTree(current, 1 + level);
+          str += tabs + "<span class='black'>}</span><br/>";
+        } else {
+          str += tabs + "\"" + item + "\"<span class='black'> : </span>\"" + current + "\"<br/>";
+        }
+      }
+      return str;
+    },
+    createPact = function (consumer, provider) {
+      var interactions = Interactions.find({
+              consumer: consumer,
+              provider: provider,
+              disabled: false
+          }).fetch(),
+          pact = {
+              consumer: {
+                  name: consumer
+              },
+              provider: {
+                  name: provider
+              },
+              interactions: [],
+              metadata: {
+                pactSpecificationVersion: '1.0.0'
+              }
+          };
+
+      _.each(interactions, function (element) {
+          pact.interactions.push(element.interaction);
+      });
+
+      return pact;
+    };
 
 Router.route('/', function () {});
 
@@ -28,6 +79,15 @@ Template.body.helpers({
   },
   interactionsHelper: function () {
     return JSON.stringify(Interactions.find().fetch());
+  },
+  pacts: function () {
+    var str = "",
+        pact = createPact("FM", "SMS");
+
+    str += "<span class='black'>{</span><br/>";
+    str += pactsTree(pact, 1);
+    str += "<span class='black'>}</span><br/>";
+    return str;
   }
 });
 

@@ -1,1 +1,16 @@
 /* CSS declarations go here */
+.blue {
+	color: blue;
+}
+
+.red {
+	color: red;
+}
+
+.black {
+	color: black;
+}
+
+.courier {
+	font-family: "Courier New", Courier, monospace;
+}

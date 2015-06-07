@@ -41,12 +41,13 @@
 
   <div class="ui long modal">
     <i class="close icon"></i>
-    <div class="header">
+    <div class="ui horizontal header divider">
+      <i class="legal icon"></i>
       Pacts
     </div>
     <div class="content">
-      <div class="description">
-        {{interactionsHelper}}
+      <div class="description blue courier">
+        {{{pacts}}}
       </div>
     </div>
     <div class="actions">
@@ -58,78 +59,78 @@
 </body>
 
 <template name="interaction">
-    <div class="ui icon buttons right floated">
-      <div class="ui basic button" id="toggleInteraction">
-        <i class="{{#if disabledHelper}}play{{else}}ban{{/if}} icon"></i>
-      </div>
-      <div class="ui basic button" id="removeInteraction">
-        <i class="remove icon"></i>
-      </div>
+  <div class="ui icon buttons right floated">
+    <div class="ui basic button" id="toggleInteraction">
+      <i class="{{#if disabledHelper}}play{{else}}ban{{/if}} icon"></i>
     </div>
-
-    <div class="title">
-      <div class="ui label {{#if receivedHelper}}green{{else}}red{{/if}}">{{countHelper}}</div>
-      <span class="{{#if receivedHelper}}green{{else}}red{{/if}}">
-      <i class="dropdown icon"></i>
-        {{interaction.request.method}} {{interaction.request.path}} {{jsonHelper interaction.request.query ''}}
-      </span>
+    <div class="ui basic button" id="removeInteraction">
+      <i class="remove icon"></i>
     </div>
+  </div>
 
-    <div class="content">
-      <p><b>{{consumer}} - {{provider}}:</b> {{interaction.description}}</p>
+  <div class="title">
+    <div class="ui label {{#if receivedHelper}}green{{else}}red{{/if}}">{{countHelper}}</div>
+    <span class="{{#if receivedHelper}}green{{else}}red{{/if}}">
+    <i class="dropdown icon"></i>
+      {{interaction.request.method}} {{interaction.request.path}} {{jsonHelper interaction.request.query ''}}
+    </span>
+  </div>
 
-      <div class="ui two column grid">
-        <div class="column" style="word-wrap: break-word">
-          <div class="ui segment">
-            <div class="ui right ribbon black label">
-              <i class="mail outline icon"></i>Request
-            </div>
-            <div class="ui divided list">
-              <div class="item">
-                <div class="content">
-                  <div class="description">
-                    <div class="ui pointing right label">Headers</div>
-                    {{jsonHelper interaction.request.headers '[]'}}
-                  </div>
-                </div>
-              </div>
-              <div class="item">
-                <div class="content">
-                  <div class="description">
-                    <div class="ui pointing right label">Body</div>
-                    {{jsonHelper interaction.request.body '[]'}}
-                  </div>
-                </div>
-              </div>
-            </div>
+  <div class="content">
+    <p><b>{{consumer}} - {{provider}}:</b> {{interaction.description}}</p>
+
+    <div class="ui two column grid">
+      <div class="column" style="word-wrap: break-word">
+        <div class="ui segment">
+          <div class="ui right ribbon black label">
+            <i class="mail outline icon"></i>Request
           </div>
-        </div>
-        <div class="column" style="word-wrap: break-word">
-          <div class="ui segment">
-            <div class="ui right ribbon blue label">
-              <i class="mail outline icon"></i>Response
-            </div>
-            <div class="ui divided list">
-              <div class="item">
-                <div class="content">
-                  <div class="description">
-                    <div class="ui pointing right label">Headers</div>
-                    {{jsonHelper interaction.response.headers '[]'}}
-                  </div>
+          <div class="ui divided list">
+            <div class="item">
+              <div class="content">
+                <div class="description">
+                  <div class="ui pointing right label">Headers</div>
+                  {{jsonHelper interaction.request.headers '[]'}}
                 </div>
               </div>
-              <div class="item">
-                <div class="content">
-                  <div class="description">
-                    <div class="ui pointing right label">Body</div>
-                    {{jsonHelper interaction.response.body '[]'}}
-                  </div>
+            </div>
+            <div class="item">
+              <div class="content">
+                <div class="description">
+                  <div class="ui pointing right label">Body</div>
+                  {{jsonHelper interaction.request.body '[]'}}
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
+      <div class="column" style="word-wrap: break-word">
+        <div class="ui segment">
+          <div class="ui right ribbon blue label">
+            <i class="mail outline icon"></i>Response
+          </div>
+          <div class="ui divided list">
+            <div class="item">
+              <div class="content">
+                <div class="description">
+                  <div class="ui pointing right label">Headers</div>
+                  {{jsonHelper interaction.response.headers '[]'}}
+                </div>
+              </div>
+            </div>
+            <div class="item">
+              <div class="content">
+                <div class="description">
+                  <div class="ui pointing right label">Body</div>
+                  {{jsonHelper interaction.response.body '[]'}}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+
+  </div>
 </template>

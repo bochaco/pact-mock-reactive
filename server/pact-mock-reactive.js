@@ -175,27 +175,37 @@ var fs = Npm.require('fs'),
             res.end(resText);
         }
     },
+    createPact = function(consumer, provider) {
+        var interactions = Interactions.find({
+                consumer: consumer,
+                provider: provider,
+                disabled: false
+            }).fetch(),
+            pact = {
+                consumer: {
+                    name: consumer
+                },
+                provider: {
+                    name: provider
+                },
+                interactions: [],
+                metadata: {
+                    pactSpecificationVersion: '1.0.0'
+                }
+            };
+
+        _.each(interactions, function (element) {
+            pact.interactions.push(element.interaction);
+        });
+
+        return pact;
+    },
     writePact = function (req, res) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         if (req.body.consumer && req.body.consumer.name && req.body.provider && req.body.provider.name) {
-            var interactions = Interactions.find({
-                    consumer: req.body.consumer.name,
-                    provider: req.body.provider.name,
-                    disabled: false
-                }).fetch(),
-                pact = req.body,
-                filename = (req.body.consumer.name.toLowerCase() + '-' + req.body.provider.name.toLowerCase()).replace(/\s/g, '_'),
-                path = appRoot + 'pacts/' + filename + '.json';
-
-            pact.interactions = [];
-            _.each(interactions, function (element) {
-                pact.interactions.push(element.interaction);
-            });
-
-            pact.metadata = {
-                'pactSpecificationVersion': '1.0.0'
-            };
-
+            var pact = createPact(req.body.consumer.name, req.body.provider.name);
+            filename = (req.body.consumer.name.toLowerCase() + '-' + req.body.provider.name.toLowerCase()).replace(/\s/g, '_'),
+            path = appRoot + 'pacts/' + filename + '.json';
             fs.writeFile(path, JSON.stringify(pact), function (err) {
                 if (err) {
                     res.end(JSON.stringify({ 'message': 'Error ocurred in mock service: RuntimeError - pact file couldn\'t be saved' }));
