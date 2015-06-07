@@ -76,64 +76,68 @@
   </div>
 
   <div class="content">
-    <p><b>{{consumer}} - {{provider}}:</b> {{interaction.description}}</p>
+    <div class="ui segment">
+      <h5 class="ui center aligned header">
+        <b>{{consumer}} - {{provider}}:</b> {{interaction.description}}
+      </h5>
 
-    <div class="ui two column grid">
-      <div class="column" style="word-wrap: break-word">
-        <div class="ui segment">
-          <div class="ui right ribbon black label">
-            <i class="mail outline icon"></i>Request
-          </div>
-          <div class="item">
-            <div class="content">
-              <div class="description">
-                <div class="ui pointing bottom label">Headers</div><br/>
-                <span class="blue">
-                  {{{jsonHelper interaction.request.headers '[empty]'}}}
-                </span>
+      <div class="ui two column grid">
+        <div class="column" style="word-wrap: break-word">
+          <div class="ui segment">
+            <div class="ui right ribbon black label">
+              <i class="mail outline icon"></i>Request
+            </div>
+            <div class="item">
+              <div class="content">
+                <div class="description">
+                  <div class="ui pointing bottom label">Headers</div><br/>
+                  <span class="blue">
+                    {{{jsonHelper interaction.request.headers '[empty]'}}}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="item">
+              <div class="content">
+                <div class="description">
+                  <div class="ui pointing bottom label">Body</div><br/>
+                  <span class="blue">
+                    {{{jsonHelper interaction.request.body '[empty]'}}}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-          <div class="item">
-            <div class="content">
-              <div class="description">
-                <div class="ui pointing bottom label">Body</div><br/>
-                <span class="blue">
-                  {{{jsonHelper interaction.request.body '[empty]'}}}
-                </span>
+        </div>
+        <div class="column" style="word-wrap: break-word">
+          <div class="ui segment">
+            <div class="ui right ribbon blue label">
+              <i class="mail outline icon"></i>Response
+            </div>
+            <div class="item">
+              <div class="content">
+                <div class="description">
+                  <div class="ui pointing bottom label">Headers</div><br/>
+                  <span class="blue">
+                    {{{jsonHelper interaction.response.headers '[empty]'}}}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="item">
+              <div class="content">
+                <div class="description">
+                  <div class="ui pointing bottom label">Body</div><br/>
+                  <span class="blue">
+                    {{{jsonHelper interaction.response.body '[empty]'}}}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div class="column" style="word-wrap: break-word">
-        <div class="ui segment">
-          <div class="ui right ribbon blue label">
-            <i class="mail outline icon"></i>Response
-          </div>
-          <div class="item">
-            <div class="content">
-              <div class="description">
-                <div class="ui pointing bottom label">Headers</div><br/>
-                <span class="blue">
-                  {{{jsonHelper interaction.response.headers '[empty]'}}}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div class="item">
-            <div class="content">
-              <div class="description">
-                <div class="ui pointing bottom label">Body</div><br/>
-                <span class="blue">
-                  {{{jsonHelper interaction.response.body '[empty]'}}}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+
     </div>
-
   </div>
 </template>
