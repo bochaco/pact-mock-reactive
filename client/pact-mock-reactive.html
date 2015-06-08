@@ -84,7 +84,7 @@
                 <div class="description">
                   <div class="ui pointing bottom label">Headers</div><br/>
                   <span class="blue">
-                    {{{jsonHelper interaction.request.headers '[empty]'}}}
+                    {{{jsonHelper interaction.request.headers}}}
                   </span>
                 </div>
               </div>
@@ -94,7 +94,7 @@
                 <div class="description">
                   <div class="ui pointing bottom label">Body</div><br/>
                   <span class="blue">
-                    {{{jsonHelper interaction.request.body '[empty]'}}}
+                    {{{jsonHelper interaction.request.body}}}
                   </span>
                 </div>
               </div>
@@ -111,7 +111,7 @@
                 <div class="description">
                   <div class="ui pointing bottom label">Headers</div><br/>
                   <span class="blue">
-                    {{{jsonHelper interaction.response.headers '[empty]'}}}
+                    {{{jsonHelper interaction.response.headers}}}
                   </span>
                 </div>
               </div>
@@ -121,7 +121,7 @@
                 <div class="description">
                   <div class="ui pointing bottom label">Body</div><br/>
                   <span class="blue">
-                    {{{jsonHelper interaction.response.body '[empty]'}}}
+                    {{{jsonHelper interaction.response.body}}}
                   </span>
                 </div>
               </div>
@@ -162,7 +162,7 @@
       Add Expected Interaction
     </div>
     <div class="content">
-        Comment: <input type="textbox" value="{{comment}}"><br/>
+        Description: <input type="textbox" value="{{description}}"><br/>
         Consumer: <input type="textbox" value="{{consumer}}"><br/>
         Provider: <input type="textbox" value="{{provider}}"><br/>
         Method:
