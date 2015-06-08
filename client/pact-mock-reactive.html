@@ -8,7 +8,7 @@
   <br/>
   <div class="ui grid">
     <div class="one wide column"></div>
-    <div class="ten wide column">
+    <div class="eight wide column">
       <h2 class="ui header">
         <i class="spy icon"></i>
         <div class="content">
@@ -16,10 +16,16 @@
         </div>
       </h2>
     </div>
-    <div class="five wide column">
+    <div class="two wide column">
       <div class="ui yellow button" id="pactsbutton">
         <i class="legal icon"></i>
         Pacts
+      </div>
+    </div>
+    <div class="five wide column">
+      <div class="ui green button" id="addbutton">
+        <i class="plus icon"></i>
+        Add
       </div>
       <div class="ui purple button" id="resetbutton">
         <i class="recycle icon"></i>
@@ -39,21 +45,8 @@
   {{/each}}
   </div>
 
-  <div class="ui long modal">
-    <i class="close icon"></i>
-    <div class="ui horizontal header divider">
-      <i class="legal icon"></i>
-      Pacts
-    </div>
-    <div class="content">
-      <div class="description blue courier">
-        {{{pacts}}}
-      </div>
-    </div>
-    <div class="actions">
-      <div class="ui button">Save to disk</div>
-    </div>
-  </div>
+  {{> showPacts}}
+  {{> addInteraction}}
 
 </body>
 
@@ -77,9 +70,9 @@
 
   <div class="content">
     <div class="ui segment">
-      <h5 class="ui center aligned header">
-        <b>{{consumer}} - {{provider}}:</b> {{interaction.description}}
-      </h5>
+      <h4 class="ui center aligned header">
+        <b>{{consumer}}&nbsp;&nbsp;&nbsp;<i class="long arrow right icon"></i>{{provider}}:</b>&nbsp;&nbsp;{{interaction.description}}
+      </h4>
 
       <div class="ui two column grid">
         <div class="column" style="word-wrap: break-word">
@@ -138,6 +131,64 @@
         </div>
       </div>
 
+    </div>
+  </div>
+</template>
+
+<template name="showPacts">
+  <div class="ui long pacts modal">
+    <i class="close icon"></i>
+    <div class="ui horizontal header divider">
+      <i class="legal icon"></i>
+      Pacts
+    </div>
+    <div class="content">
+      <div class="description blue courier">
+        {{{pacts}}}
+      </div>
+    </div>
+    <div class="actions">
+      <div class="ui blue button" id="savepactsbutton">
+        <i class="file text icon"></i>
+        Save to Disk
+      </div>
+    </div>
+  </div>
+</template>
+
+<template name="addInteraction">
+  <div class="ui add modal">
+    <i class="close icon"></i>
+    <div class="header">
+      Add Expected Interaction
+    </div>
+    <div class="content">
+        Comment: <input type="textbox" value="{{comment}}"><br/>
+        Consumer: <input type="textbox" value="{{consumer}}"><br/>
+        Provider: <input type="textbox" value="{{provider}}"><br/>
+        Method:
+        <select>
+          {{#each verbs}}
+          <option value="{{name}}">{{name}}</option>
+          {{/each}}
+        </select><br/>
+        Path: <input type="textbox" value="{{path}}"><br/>
+        Query: <input type="textbox" value="{{query}}"><br/>
+
+        Request Header object: <input type="textbox" value="{{reqHeaderObj}}"><br/>
+        Request object: <input type="textbox" value="{{reqObj}}"><br/>
+        Response Status: <input type="textbox" value="{{resStatus}}"><br/>
+        Response Header object: <input type="textbox" value="{{resHeaderObj}}"><br/>
+        Response object: <input type="textbox" value="{{resObj}}"><br/>
+    </div>
+    <div class="actions">
+      <div class="ui red button">
+        Cancel
+      </div>
+      <div class="ui positive right labeled icon button">
+        Save
+        <i class="checkmark icon"></i>
+      </div>
     </div>
   </div>
 </template>

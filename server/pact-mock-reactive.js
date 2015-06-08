@@ -19,11 +19,35 @@ Meteor.startup(function () {
 
 Meteor.methods({
     resetInteractions: function () {
-        Interactions.update({ count: { $gte: 0 } }, { $set : { count: 1 } });
+        Interactions.update({ count: { $gte: 0 } }, { $set : { count: 1 } }, {multi: true});
         Interactions.remove({ count: { $lt: 0 } });
     },
     clearInteractions: function () {
         Interactions.remove({});
+    },
+    addInteraction: function (consumer, provider, interaction) {
+        var selector = {
+                method : interaction.request.method,
+                path : interaction.request.path,
+                query : interaction.request.query,
+                headers : interaction.request.headers,
+                body : interaction.request.body
+            },            
+            successCallback = function (matchingInteraction) {
+                if (consumer === matchingInteraction.consumer && provider === matchingInteraction.provider) {
+                    Interactions.update({ _id: matchingInteraction._id }, { $inc: { count: 1 } });
+                }
+            },
+            errorCallback = function () {
+                insertInteraction(consumer, provider, interaction);
+            };
+        findInteraction(selector, successCallback, errorCallback);
+    },
+    writePacts: function (pairs) {
+        var res = {};
+        _.each(pairs, function (p) {
+            writePact(p, res);
+        });
     }
 });
 
