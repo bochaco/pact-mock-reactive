@@ -42,6 +42,20 @@ Router.route('/', function () {});
 
 Meteor.startup(function () {
   // code to run on client at startup
+  Session.setDefault({
+    'comment': "comment",
+    'consumer': "consumer1",
+    'provider': "provider1",
+    'method': "POST",
+    'path': "/items",
+    'query': "",
+    'reqHeaderObj': "",
+    'reqObj': "",
+    'resStatus': "200",
+    'resHeaderObj': "",
+    'resObj': ""
+  });
+
   $('.ui.accordion').accordion({exclusive: false});
 
   $('.ui.pacts.modal')
@@ -54,7 +68,7 @@ Meteor.startup(function () {
       onDeny    : function(){
         return false;
       },
-      onApprove : function() {
+      onApprove : function(target) {
         var interaction = {
           provider_state: Session.get('provider_state'),
           providerState : null,
@@ -71,7 +85,7 @@ Meteor.startup(function () {
             headers: Session.get('resHeaderObj'),
             body: Session.get('resObj')
           }
-        }
+        };
 
         Meteor.call("addInteraction", Session.get('consumer'), Session.get('provider'), interaction);
       }
@@ -99,7 +113,7 @@ Template.body.events({
   },
   'click #addbutton': function () {
     $('.ui.add.modal').modal('show');
-  },
+  }
 });
 
 Template.interaction.helpers({
@@ -233,7 +247,17 @@ Template.addInteraction.helpers({
     return Session.get('resObj');
   },
   verbs: function () {
+    var verbs = [
+      {name: "GET"},
+      {name: "POST"},
+      {name: "PUT"},
+      {name: "DELETE"},
+      {name: "PATCH"}
+    ];
+
     return verbs;
   }
 });
 
+Template.addInteraction.events({
+});
