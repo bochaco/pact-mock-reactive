@@ -11,44 +11,24 @@ var escapeMetaCharacters = function (string) {
             return doc;
         }
     }),
-    objTree = function (obj, level) {
-        var str = "",
-            tabs = new Array(3 * level).join("&nbsp;"),
-            endSpan = ",</span><br/>",
-            innerEndSpan = endSpan + tabs + tabs,
-            endBr = ",<br/>";
-
-        _.each(obj, function (value, key) {
-            if (_.isUndefined(value) || _.isNull(value)) {
-                str += tabs + "\"" + key + "\"<span class='black'> : null</span><br/>";
-            } else if (_.isArray(value)) {
-                str += tabs + "\"" + key + "\"<span class='black'> : [</span>" + tabs;
-                _.each(value, function (element) {
-                    str += "<span class='black'>{</span><br/>";
-                    str += objTree(element, 2 + level);
-                    str += tabs + tabs + "<span class='black'>}" + innerEndSpan;
-                });
-                //Remove trailing comma
-                if (str.lastIndexOf(innerEndSpan) + innerEndSpan.length === str.length) {
-                    str = str.slice(0, -innerEndSpan.length);
+    syntaxHighlight = function (json) {
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+            var cls = 'blue';
+            //The next code is available if we want to change the color according to the value type
+            /*if (/^"/.test(match)) {
+                if (/:$/.test(match)) {
+                    cls = 'key';
+                } else {
+                    cls = 'string';
                 }
-                str += tabs + "<span class='black'>]" + endSpan;
-            } else if (_.isObject(value)) {
-                str += tabs + "\"" + key + "\"<span class='black'> : {</span><br/>";
-                str += objTree(value, 1 + level);
-                str += tabs + "<span class='black'>},</span><br/>";
-            } else {
-                str += tabs + "\"" + key + "\"<span class='black'> : </span>\"" + value + "\"" + endBr;
-            }
+            } else if (/true|false/.test(match)) {
+                cls = 'boolean';
+            } else if (/null/.test(match)) {
+                cls = 'null';
+            }*/
+            return '<span class="' + cls + '">' + match + '</span>';
         });
-        //Remove trailing comma
-        if (str.lastIndexOf(endSpan) + endSpan.length === str.length) {
-            str = str.slice(0, -endSpan.length) + "</span><br/>";
-        }
-        if (str.lastIndexOf(endBr) + endBr.length === str.length) {
-            str = str.slice(0, -endBr.length) + "<br/>";
-        }
-        return str;
     };
 
 Router.route('/', function () {
@@ -165,26 +145,7 @@ Template.interaction.helpers({
         return str;
     },
     jsonHelper: function (object) {
-        if (_.isUndefined(object) || _.isNull(object)) {
-            return "<span class='black'>{</span><br/><span class='black'>}</span>";
-        }
-        if (_.isArray(object)) {
-            var str = "<span class='black'>[</span>&nbsp;&nbsp;",
-                endSpan = ",</span><br/>";
-            _.each(object, function (element) {
-                str += "<span class='black'>{</span><br/>";
-                str += objTree(element, 1);
-                str += "<span class='black'>}" + endSpan;
-            });
-            //Remove trailing comma
-            if (str.lastIndexOf(endSpan) + endSpan.length === str.length) {
-                str = str.slice(0, -endSpan.length);
-            }
-            return str + "&nbsp;&nbsp;<span class='black'>]</span>";
-        }
-        if (_.isObject(object)) {
-            return "<span class='black'>{</span><br/>" + objTree(object, 1) + "<span class='black'>}</span>";
-        }
+        return syntaxHighlight(JSON.stringify(object || {}, null, 4));
     }
 });
 
@@ -210,7 +171,7 @@ Template.showPacts.helpers({
             pairs = [];
 
         _.each(groupedInteractions, function (value) {
-            str += "<span class='black'>Pact between " + value[0].consumer + " and " + value[0].provider + ":</span><br/>";
+            str += "<span class='black'><b>Pact between " + value[0].consumer + " and " + value[0].provider + ":</b></span><br/>";
             pact = {
                 consumer: {
                     name: value[0].consumer
@@ -228,13 +189,11 @@ Template.showPacts.helpers({
                 pactSpecificationVersion: '1.0.0'
             };
 
-            str += "<span class='black'>{</span><br/>";
-            str += objTree(pact, 1);
-            str += "<span class='black'>}</span><br/><br/>";
+            str += '<pre class="black">' + syntaxHighlight(JSON.stringify(pact, null, 4)) + "</pre><br/><br/>";
         });
 
         Session.set("pairsConsumerProvider", pairs);
-        return str;
+        return str ? str.substring(0, str.length - 10) : str;
     }
 });
 

@@ -14,3 +14,10 @@
 .courier {
 	font-family: "Courier New", Courier, monospace;
 }
+
+pre {
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    word-wrap: break-word;
+}
