@@ -38,15 +38,15 @@ Router.route('/', function () {
 Meteor.startup(function () {
     // code to run on client at startup
     Session.setDefault({
-        'description': "description",
-        'consumer': "consumer1",
-        'provider': "provider1",
-        'method': "POST",
-        'path': "/items",
+        'description': "",
+        'consumer': "",
+        'provider': "",
+        'method': "",
+        'path': "",
         'query': "",
         'reqHeaderObj': "",
         'reqObj': "",
-        'resStatus': "200",
+        'resStatus': "",
         'resHeaderObj': "",
         'resObj': ""
     });
@@ -63,7 +63,7 @@ Meteor.startup(function () {
             onDeny    : function () {
                 return false;
             },
-            onApprove : function () {
+            onApprove : function (event, template) {
                 var interaction = {
                     provider_state: Session.get('provider_state'),
                     providerState : null,
@@ -244,4 +244,8 @@ Template.addInteraction.helpers({
 });
 
 Template.addInteraction.events({
+    'click .ui.add.modal.pepe': function () {
+        alert("jjjj");
+        Session.set('description', this);
+    }
 });

@@ -149,34 +149,87 @@
 <template name="addInteraction">
   <div class="ui add modal">
     <i class="close icon"></i>
-    <div class="header">
-      Add Expected Interaction
-    </div>
     <div class="content">
-        Description: <input type="textbox" value="{{description}}"><br/>
-        Consumer: <input type="textbox" value="{{consumer}}"><br/>
-        Provider: <input type="textbox" value="{{provider}}"><br/>
-        Method:
-        <select>
-          {{#each verbs}}
-          <option value="{{name}}">{{name}}</option>
-          {{/each}}
-        </select><br/>
-        Path: <input type="textbox" value="{{path}}"><br/>
-        Query: <input type="textbox" value="{{query}}"><br/>
+      <div class="ui fluid form">
+        <div class="three fields">
+          <div class="eight wide field">
+            <label>Description</label>
+            <input placeholder="Description of interaction" type="text" value="{{description}}">
+          </div>
+          <div class="four wide field">
+            <label>Consumer</label>
+            <input placeholder="Consumer name" type="text" value="{{consumer}}">
+          </div>
+          <div class="four wide field">
+            <label>Provider</label>
+            <input placeholder="Provider name" type="text" value="{{provider}}">
+          </div>
+        </div>
+        <div class="three fields">
+          <div class="two wide field">
+            <label>Method</label>
+            <select class="ui dropdown">
+              <option value="">Method</option>
+              {{#each verbs}}
+              <option value="{{name}}">{{name}}</option>
+              {{/each}}
+            </select>
+          </div>
+          <div class="seven wide field">
+            <label>Path</label>
+            <input placeholder="Path" type="text" value="{{path}}">
+          </div>
+          <div class="seven wide field">
+            <label>Query</label>
+            <input placeholder="Query object" type="text" value="{{query}}">
+          </div>
+        </div>
 
-        Request Header object: <input type="textbox" value="{{reqHeaderObj}}"><br/>
-        Request object: <input type="textbox" value="{{reqObj}}"><br/>
-        Response Status: <input type="textbox" value="{{resStatus}}"><br/>
-        Response Header object: <input type="textbox" value="{{resHeaderObj}}"><br/>
-        Response object: <input type="textbox" value="{{resObj}}"><br/>
+        <div class="field">
+          <div class="ui two column middle aligned relaxed fitted stackable grid">
+            <div class="column">
+              <div class="ui bottom attached segment">
+                <h4 class="ui top attached label">Request</h4>
+                <div class="twelve wide field">
+                  <label>Headers</label>
+                  <input placeholder="Headers object" type="text" value="{{reqHeaderObj}}">
+                </div>
+                <div class="field">
+                  <label>Body</label>
+                  <textarea placeholder="Body object">{{reqObj}}</textarea>
+                </div>
+              </div>
+            </div>
+            <div class="column">
+              <div class="ui bottom attached segment">
+                <h4 class="ui top attached label">Response</h4>
+                <div class="two fields">
+                  <div class="four wide field">
+                    <label>Status Code</label>
+                    <input placeholder="Code" type="text" value="{{resStatus}}">
+                  </div>
+                  <div class="twelve wide field">
+                    <label>Headers</label>
+                    <input placeholder="Headers object" type="text" value="{{resHeaderObj}}">
+                  </div>
+                </div>
+                <div class="field">
+                  <label>Body</label>
+                  <textarea placeholder="Body object">{{resObj}}</textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+
     <div class="actions">
       <div class="ui red button">
         Cancel
       </div>
       <div class="ui positive right labeled icon button">
-        Add
+        Add Interaction
         <i class="checkmark icon"></i>
       </div>
     </div>
