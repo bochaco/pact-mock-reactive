@@ -134,16 +134,8 @@ Template.interaction.helpers({
         return this.disabled;
     },
     queryHelper: function (object) {
-        var str = "";
-        _.each(object, function (value, key) {
-            if (str.length) {
-                str += "&";
-            } else {
-                str += "/";
-            }
-            str += key + "=" + value;
-        });
-        return str;
+        var str = $.param(object);
+        return str ? "?" + decodeURIComponent(str) : str;
     },
     jsonHelper: function (object) {
         return syntaxHighlight(JSON.stringify(object || {}, null, 4));
