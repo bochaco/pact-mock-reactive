@@ -41,6 +41,7 @@ Meteor.startup(function () {
         'description': "",
         'consumer': "",
         'provider': "",
+        'provider_state': "",
         'method': "",
         'path': "",
         'query': "",
@@ -63,7 +64,7 @@ Meteor.startup(function () {
             onDeny    : function () {
                 return false;
             },
-            onApprove : function (event, template) {
+            onApprove : function () {
                 var interaction = {
                     provider_state: Session.get('provider_state'),
                     providerState : null,
@@ -71,14 +72,14 @@ Meteor.startup(function () {
                     request: {
                         method: Session.get('method').toLowerCase(),
                         path: Session.get('path'),
-                        query: Session.get('query'),
-                        headers: Session.get('reqHeaderObj'),
-                        body: Session.get('reqObj')
+                        query: JSON.parse(Session.get('query')),
+                        headers: JSON.parse(Session.get('reqHeaderObj')),
+                        body: JSON.parse(Session.get('reqObj'))
                     },
                     response: {
                         status: Session.get('resStatus'),
-                        headers: Session.get('resHeaderObj'),
-                        body: Session.get('resObj')
+                        headers: JSON.parse(Session.get('resHeaderObj')),
+                        body: JSON.parse(Session.get('resObj'))
                     }
                 };
                 Meteor.call("addInteraction", Session.get('consumer'), Session.get('provider'), interaction);
@@ -207,6 +208,9 @@ Template.addInteraction.helpers({
     provider: function () {
         return Session.get('provider');
     },
+    provider_state: function () {
+        return Session.get('provider_state');
+    },
     method: function () {
         return Session.get('method');
     },
@@ -244,8 +248,10 @@ Template.addInteraction.helpers({
 });
 
 Template.addInteraction.events({
-    'click .ui.add.modal.pepe': function () {
-        alert("jjjj");
-        Session.set('description', this);
+    'change input': function (event) {
+        Session.set(event.target.id, event.target.value);
+    },
+    'change #method': function (event) {
+        Session.set(event.target.id, event.target.value);
     }
 });

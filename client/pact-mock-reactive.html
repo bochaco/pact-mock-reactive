@@ -45,7 +45,10 @@
   </div>
 
   {{> showPacts}}
+
+  <div class="ui add modal">
   {{> addInteraction}}
+  </div>
 
 </body>
 
@@ -147,28 +150,31 @@
 </template>
 
 <template name="addInteraction">
-  <div class="ui add modal">
     <i class="close icon"></i>
     <div class="content">
       <div class="ui fluid form">
+        <div class="eight wide field">
+          <label>Description</label>
+          <input id="description" placeholder="Description of interaction" type="text" value="{{description}}">
+        </div>
         <div class="three fields">
-          <div class="eight wide field">
-            <label>Description</label>
-            <input placeholder="Description of interaction" type="text" value="{{description}}">
-          </div>
           <div class="four wide field">
             <label>Consumer</label>
-            <input placeholder="Consumer name" type="text" value="{{consumer}}">
+            <input id="consumer" placeholder="Consumer name" type="text" value="{{consumer}}">
           </div>
           <div class="four wide field">
             <label>Provider</label>
-            <input placeholder="Provider name" type="text" value="{{provider}}">
+            <input id="provider" placeholder="Provider name" type="text" value="{{provider}}">
+          </div>
+          <div class="eight wide field">
+            <label>Provider State</label>
+            <input id="provider_state" placeholder="Provider state" type="text" value="{{provider_state}}">
           </div>
         </div>
         <div class="three fields">
           <div class="two wide field">
             <label>Method</label>
-            <select class="ui dropdown">
+            <select id="method" class="ui dropdown">
               <option value="">Method</option>
               {{#each verbs}}
               <option value="{{name}}">{{name}}</option>
@@ -177,11 +183,11 @@
           </div>
           <div class="seven wide field">
             <label>Path</label>
-            <input placeholder="Path" type="text" value="{{path}}">
+            <input id="path" placeholder="Path" type="text" value="{{path}}">
           </div>
           <div class="seven wide field">
             <label>Query</label>
-            <input placeholder="Query object" type="text" value="{{query}}">
+            <input id="query" placeholder="Query object" type="text" value="{{query}}">
           </div>
         </div>
 
@@ -192,11 +198,11 @@
                 <h4 class="ui top attached label">Request</h4>
                 <div class="twelve wide field">
                   <label>Headers</label>
-                  <input placeholder="Headers object" type="text" value="{{reqHeaderObj}}">
+                  <input id="reqHeaderObj" placeholder="Headers object" type="text" value="{{reqHeaderObj}}">
                 </div>
                 <div class="field">
                   <label>Body</label>
-                  <textarea placeholder="Body object">{{reqObj}}</textarea>
+                  <textarea id="reqObj" placeholder="Body object">{{reqObj}}</textarea>
                 </div>
               </div>
             </div>
@@ -206,16 +212,16 @@
                 <div class="two fields">
                   <div class="four wide field">
                     <label>Status Code</label>
-                    <input placeholder="Code" type="text" value="{{resStatus}}">
+                    <input id="resStatus" placeholder="Code" type="text" value="{{resStatus}}">
                   </div>
                   <div class="twelve wide field">
                     <label>Headers</label>
-                    <input placeholder="Headers object" type="text" value="{{resHeaderObj}}">
+                    <input id="resHeaderObj" placeholder="Headers object" type="text" value="{{resHeaderObj}}">
                   </div>
                 </div>
                 <div class="field">
                   <label>Body</label>
-                  <textarea placeholder="Body object">{{resObj}}</textarea>
+                  <textarea id="resObj" placeholder="Body object">{{resObj}}</textarea>
                 </div>
               </div>
             </div>
@@ -228,10 +234,9 @@
       <div class="ui red button">
         Cancel
       </div>
-      <div class="ui positive right labeled icon button">
+      <div class="ui positive right labeled icon button" id="newinteractionbutton">
         Add Interaction
         <i class="checkmark icon"></i>
       </div>
     </div>
-  </div>
 </template>
