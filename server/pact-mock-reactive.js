@@ -198,7 +198,7 @@ var fs = Npm.require('fs'),
             var pact = createPact(req.body.consumer.name, req.body.provider.name),
                 filename = (req.body.consumer.name.toLowerCase() + '-' + req.body.provider.name.toLowerCase()).replace(/\s/g, '_'),
                 path = appRoot + 'pacts/' + filename + '.json';
-            fs.writeFile(path, JSON.stringify(pact), function (err) {
+            fs.writeFile(path, JSON.stringify(pact, null, 2), function (err) {
                 if (err) {
                     res.end(JSON.stringify({ 'message': 'Error ocurred in mock service: RuntimeError - pact file couldn\'t be saved' }));
                 } else {
@@ -221,7 +221,11 @@ var fs = Npm.require('fs'),
                 var expectedResponse = selectedInteraction.interaction.response;
                 Interactions.update({ _id: selectedInteraction._id }, { $inc: { count: -1 } });
                 res.writeHead(expectedResponse.status, expectedResponse.headers);
-                res.end(JSON.stringify(expectedResponse.body));
+                if (expectedResponse.headers && expectedResponse.headers["Content-Type"] === "application/xml") {
+                    res.end(expectedResponse.body);
+                } else {
+                    res.end(JSON.stringify(expectedResponse.body));
+                }
             },
             errorCallback = function (err) {
                 // this is an unexpected interaction, verify if it has happened before
