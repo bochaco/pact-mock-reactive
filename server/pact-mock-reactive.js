@@ -23,6 +23,12 @@ var pathNpm = Npm.require('path'),
 appRoot = appRoot.indexOf('.meteor') >= 0 ? appRoot.substring(0, appRoot.indexOf('.meteor')) : appRoot;
 
 var fs = Npm.require('fs'),
+    deleteInteractions = function (req) {
+        var consumerName = req.headers['x-pact-consumer'],
+            providerName = req.headers['x-pact-provider'];
+
+        Interactions.remove({consumer: consumerName, provider: providerName});
+    },
     insertInteraction = function (consumerName, providerName, interaction, count) {
         //workaround for dots in the keys (problem with mongo)
         interaction = JSON.parse(escapeMetaCharacters(JSON.stringify(interaction)));
@@ -112,6 +118,7 @@ var fs = Npm.require('fs'),
             _.each (req.body.interactions, function(current) {
                 newInteractions.push(current);
             });
+            deleteInteractions(req);
         } else {
             newInteractions.push(req.body);
         }
@@ -299,9 +306,9 @@ Router.route('/interactions', { where: 'server' })
     .delete(function () {
         var headers = this.request.headers;
         if (headers['x-pact-mock-service'] === 'true') {
-            Interactions.remove({});
-            this.response.writeHead(200, { 'Content-Type': 'text/plain' });
-            this.response.end('Deleted interactions');
+            deleteInteractions(this.request);
+            res.writeHead(200, { 'Content-Type': 'text/plain' });
+            res.end('Deleted interactions');
         } else {
             requestsHandler(this.method, this.url, this.params.query, this.request, this.response);
         }
