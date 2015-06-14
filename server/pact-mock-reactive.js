@@ -102,34 +102,49 @@ var fs = Npm.require('fs'),
             });
         }
     },
-    registerInteraction = function (req, res) {
+    registerInteractions = function (req, res) {
         var consumerName = req.headers['x-pact-consumer'],
             providerName = req.headers['x-pact-provider'],
-            sendResponse = function () {
-                res.writeHead(200, { 'Content-Type': 'text/plain' });
-                res.end('Set interactions for ' + consumerName + '-' + providerName);
-            },
-            interaction = {
-                method : req.body.request.method,
-                path : req.body.request.path,
-                query : req.body.request.query,
-                headers : req.body.request.headers,
-                body : req.body.request.body
-            },
-            successCallback = function (matchingInteraction) {
-                if (consumerName !== matchingInteraction.consumer || providerName !== matchingInteraction.provider) {
-                    res.writeHead(500, { 'Content-Type': 'text/plain' });
-                    res.end('The interaction is already registered but against a different pair of consumer-provider');
-                } else {
-                    Interactions.update({ _id: matchingInteraction._id }, { $inc: { count: 1 } });
-                    sendResponse();
-                }
-            },
-            errorCallback = function () {
-                insertInteraction(consumerName, providerName, req.body);
-                sendResponse();
-            };
-        findInteraction(interaction, successCallback, errorCallback);
+            newInteractions = [],
+            errors = [];
+
+        if (req.body.interactions) {
+            _.each (req.body.interactions, function(current) {
+                newInteractions.push(current);
+            });
+        } else {
+            newInteractions.push(req.body);
+        }
+        _.each (newInteractions, function(current) {
+            var interaction = {
+                    method : current.request.method,
+                    path : current.request.path,
+                    query : current.request.query,
+                    headers : current.request.headers,
+                    body : current.request.body
+                },
+                successCallback = function (matchingInteraction) {
+                    if (consumerName !== matchingInteraction.consumer || providerName !== matchingInteraction.provider) {
+                        errors.push({
+                            error: 'The interaction is already registered but against a different pair of consumer-provider',
+                            interaction: current
+                        });
+                    } else {
+                        Interactions.update({ _id: matchingInteraction._id }, { $inc: { count: 1 } });
+                    }
+                },
+                errorCallback = function () {
+                    insertInteraction(consumerName, providerName, current);
+                };
+            findInteraction(interaction, successCallback, errorCallback);
+        });
+        if (errors.length > 0) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(errors));
+        } else {
+            res.writeHead(200, { 'Content-Type': 'text/plain' });
+            res.end('Set interactions for ' + consumerName + '-' + providerName);
+        }
     },
     verifyInteractions = function (req, res) {
         var missingReqs = Interactions.find({
@@ -260,7 +275,7 @@ var fs = Npm.require('fs'),
     routeInteractions = function (route) {
         var headers = route.request.headers;
         if (headers['x-pact-mock-service'] === 'true') {
-            registerInteraction(route.request, route.response);
+            registerInteractions(route.request, route.response);
         } else {
             requestsHandler(route.method, route.url, route.params.query, route.request, route.response);
         }
