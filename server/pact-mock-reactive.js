@@ -23,6 +23,10 @@ var pathNpm = Npm.require('path'),
 appRoot = appRoot.indexOf('.meteor') >= 0 ? appRoot.substring(0, appRoot.indexOf('.meteor')) : appRoot;
 
 var fs = Npm.require('fs'),
+    normalizeConsumerProvider = function (req) {
+        req.headers['x-pact-consumer'] = req.headers['x-pact-consumer'] || 'NULL';
+        req.headers['x-pact-provider'] = req.headers['x-pact-provider'] || 'NULL';
+    },
     deleteInteractions = function (req) {
         var consumerName = req.headers['x-pact-consumer'],
             providerName = req.headers['x-pact-provider'];
@@ -191,8 +195,8 @@ var fs = Npm.require('fs'),
     },
     createPact = function (consumer, provider) {
         var interactions = Interactions.find({
-                consumer: consumer,
-                provider: provider,
+                $or : [ {consumer: consumer} , {consumer: 'NULL'} ],
+                $or : [ {provider: provider} , {provider: 'NULL'} ],
                 disabled: false
             }).fetch(),
             pact = {
@@ -298,14 +302,17 @@ var fs = Npm.require('fs'),
 
 Router.route('/interactions', { where: 'server' })
     .post(function () {
+        normalizeConsumerProvider(this.request);
         routeInteractions(this);
     })
         .put(function () {
+        normalizeConsumerProvider(this.request);
         routeInteractions(this);
     })
     .delete(function () {
         var headers = this.request.headers;
         if (headers['x-pact-mock-service'] === 'true') {
+            normalizeConsumerProvider(this.request);
             deleteInteractions(this.request);
             res.writeHead(200, { 'Content-Type': 'text/plain' });
             res.end('Deleted interactions');
@@ -318,6 +325,7 @@ Router.route('/interactions/verification', { where: 'server' })
     .get(function () {
         var headers = this.request.headers;
         if (headers['x-pact-mock-service'] === 'true') {
+            normalizeConsumerProvider(this.request);
             verifyInteractions(this.request, this.response);
         } else {
             requestsHandler(this.method, this.url, this.params.query, this.request, this.response);
