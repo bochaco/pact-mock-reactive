@@ -9,3 +9,5 @@ autopublish
 insecure
 iron:router
 semantic:ui-css
+sanjo:jasmine
+velocity:html-reporter
