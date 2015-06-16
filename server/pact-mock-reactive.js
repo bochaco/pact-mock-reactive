@@ -314,8 +314,8 @@ Router.route('/interactions', { where: 'server' })
         if (headers['x-pact-mock-service'] === 'true') {
             normalizeConsumerProvider(this.request);
             deleteInteractions(this.request);
-            res.writeHead(200, { 'Content-Type': 'text/plain' });
-            res.end('Deleted interactions');
+            this.response.writeHead(200, { 'Content-Type': 'text/plain' });
+            this.response.end('Deleted interactions');
         } else {
             requestsHandler(this.method, this.url, this.params.query, this.request, this.response);
         }
