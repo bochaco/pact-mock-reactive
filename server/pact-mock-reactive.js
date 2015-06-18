@@ -31,7 +31,10 @@ var fs = Npm.require('fs'),
         var consumerName = req.headers['x-pact-consumer'],
             providerName = req.headers['x-pact-provider'];
 
-        Interactions.remove({consumer: consumerName, provider: providerName});
+        Interactions.remove({
+            $or: [ {consumer: consumerName}, {consumer: 'UNEXPECTED'} ],
+            $or: [ {provider: providerName}, {consumer: 'UNEXPECTED'} ]
+        });
     },
     insertInteraction = function (consumerName, providerName, interaction, count) {
         //workaround for dots in the keys (problem with mongo)
