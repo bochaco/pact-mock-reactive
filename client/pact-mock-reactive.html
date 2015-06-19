@@ -258,12 +258,24 @@
   </div>
   <div class="content">
     <div class="description">
-      <input class="importPactFile" type="file">
-      <label>Pact file</label>
+
+<div class="field">
+    <div class="ui fluid action input">
+        <input type="text" value="{{filename}}" placeholder="File...">
+        <label class="ui icon button btn-file">
+          <i class="attach icon"></i>
+          <input type="file" class="importPactFile" style="display: none">
+        </label>
+    </div>
+</div>  
+
     </div>
   </div>
   <div class="actions">
-    <div class="ui button">Cancel</div>
-    <div class="ui positive button">OK</div>
+    <div class="ui red button">Cancel</div>
+    <div class="ui positive right labeled icon button">
+      Import
+      <i class="checkmark icon"></i>
+    </div>
   </div>
 </template>

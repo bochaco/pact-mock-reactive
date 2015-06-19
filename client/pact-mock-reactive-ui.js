@@ -124,6 +124,8 @@ Template.body.events({
         $('.ui.add.modal').modal('show');
     },
     'click #importbutton': function () {
+        Session.set("importFilename", "");
+        Session.set("importPactFile", "");
         $('.ui.import.modal').modal('show');
     }
 });
@@ -262,11 +264,18 @@ Template.addInteraction.events({
     }
 });
 
+Template.importPactFile.helpers({
+    filename: function () {
+        return Session.get("importFilename");
+    }
+});
+
 Template.importPactFile.events({
     'change .importPactFile': function (event) {
         var reader = new FileReader();
         reader.onload = function(e) {
             Session.set("importPactFile", JSON.parse(e.target.result));
+            Session.set("importFilename", event.target.files[0].name);
         }
         reader.readAsText(event.target.files[0]);
     }
