@@ -211,7 +211,12 @@ var fs = Npm.require('fs'),
                 },
                 interactions: [],
                 metadata: {
-                    pactSpecificationVersion: '1.0.0'
+                    "pact-specification": {
+                        version: '2.0.0'
+                    },
+                    "pact-mock-reactive": {
+                        version: '0.1.0'
+                    }
                 }
             };
 

@@ -67,7 +67,6 @@ Meteor.startup(function () {
             onApprove : function () {
                 var interaction = {
                     provider_state: Session.get('provider_state'),
-                    providerState : null,
                     description: Session.get('description'),
                     request: {
                         method: Session.get('method').toLowerCase(),
@@ -178,9 +177,6 @@ Template.showPacts.helpers({
             _.each(value, function (element) {
                 pact.interactions.push(element.interaction);
             });
-            pact.metadata = {
-                pactSpecificationVersion: '1.0.0'
-            };
 
             str += '<pre class="black">' + syntaxHighlight(JSON.stringify(pact, null, 4)) + "</pre><br/><br/>";
         });
