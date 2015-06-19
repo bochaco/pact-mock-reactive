@@ -7,7 +7,7 @@
   <br/>
   <div class="ui grid">
     <div class="one wide column"></div>
-    <div class="eight wide column">
+    <div class="six wide column">
       <h2 class="ui header">
         <i class="spy icon"></i>
         <div class="content">
@@ -19,6 +19,12 @@
       <div class="ui yellow button" id="pactsbutton">
         <i class="legal icon"></i>
         Pacts
+      </div>
+    </div>
+    <div class="two wide column">
+      <div class="ui blue button" id="importbutton">
+        <i class="upload icon"></i>
+        Import
       </div>
     </div>
     <div class="five wide column">
@@ -48,6 +54,10 @@
 
   <div class="ui add modal">
   {{> addInteraction}}
+  </div>
+
+  <div class="ui small import modal">
+  {{> importPactFile}}
   </div>
 
 </body>
@@ -239,4 +249,21 @@
         <i class="checkmark icon"></i>
       </div>
     </div>
+</template>
+
+<template name="importPactFile">
+  <i class="close icon"></i>
+  <div class="header">
+    Import a Pact file
+  </div>
+  <div class="content">
+    <div class="description">
+      <input class="importPactFile" type="file">
+      <label>Pact file</label>
+    </div>
+  </div>
+  <div class="actions">
+    <div class="ui button">Cancel</div>
+    <div class="ui positive button">OK</div>
+  </div>
 </template>

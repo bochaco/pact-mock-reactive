@@ -11,3 +11,4 @@ iron:router
 semantic:ui-css
 sanjo:jasmine
 velocity:html-reporter
+cfs:standard-packages

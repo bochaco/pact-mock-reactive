@@ -84,6 +84,21 @@ Meteor.startup(function () {
                 Meteor.call("addInteraction", Session.get('consumer'), Session.get('provider'), interaction);
             }
         });
+
+    $('.ui.import.modal')
+        .modal({
+            onDeny    : function () {
+                return false;
+            },
+            onApprove : function () {
+                var pactFile = Session.get("importPactFile");
+                _.each(pactFile.interactions, function(interaction) {
+                    Meteor.call("addInteraction", pactFile.consumer.name, pactFile.provider.name, interaction);
+                });
+            }
+        });
+
+
 });
 
 Template.body.helpers({
@@ -107,6 +122,9 @@ Template.body.events({
     },
     'click #addbutton': function () {
         $('.ui.add.modal').modal('show');
+    },
+    'click #importbutton': function () {
+        $('.ui.import.modal').modal('show');
     }
 });
 
@@ -241,5 +259,15 @@ Template.addInteraction.events({
     },
     'change #method': function (event) {
         Session.set(event.target.id, event.target.value);
+    }
+});
+
+Template.importPactFile.events({
+    'change .importPactFile': function (event) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            Session.set("importPactFile", JSON.parse(e.target.result));
+        }
+        reader.readAsText(event.target.files[0]);
     }
 });
