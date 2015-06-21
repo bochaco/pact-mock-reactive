@@ -131,20 +131,28 @@ Template.body.events({
 });
 
 Template.interaction.helpers({
-    receivedHelper: function () {
-        return this.count === 0;
+    colorHelper: function () {
+        var color = "gray";
+        if (!this.disabled) {
+            if (this.count !== this.expected) {
+                color = "red";
+            } else {
+                color = "green";
+            }
+        }
+        return color;
+    },
+    unexpectedHelper: function () {
+        return this.expected === 0;
     },
     countHelper: function () {
         var label = "Received";
-        if (this.count > 0) {
-            label = "Missing";
+        if (this.expected > 0) {
+            label += " (" + this.count + "/" + this.expected + ")";
+        } else {
+            label = "Unexpected";
             if (this.count > 1) {
                 label += " (" + this.count + ")";
-            }
-        } else if (this.count < 0) {
-            label = "Unexpected";
-            if (this.count < -1) {
-                label += " (" + (-1 * this.count) + ")";
             }
         }
         return label;

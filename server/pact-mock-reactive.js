@@ -1,4 +1,5 @@
-var escapeMetaCharacters = function (string) {
+var NULL = "NULL",
+    escapeMetaCharacters = function (string) {
         return string.replace(/\$/g, '\\uff04').replace(/\./g, '\\uff0E');
     },
     unescapeMetaCharacters = function (string) {
@@ -32,17 +33,17 @@ var fs = Npm.require('fs'),
             providerName = req.headers['x-pact-provider'];
 
         Interactions.remove({
-            $or: [ {consumer: consumerName}, {consumer: 'UNEXPECTED'} ],
-            $or: [ {provider: providerName}, {consumer: 'UNEXPECTED'} ]
+            $or: [ {consumer: consumerName}, {provider: providerName}, {expected: 0} ]
         });
     },
-    insertInteraction = function (consumerName, providerName, interaction, count) {
+    insertInteraction = function (consumerName, providerName, interaction, expected, count) {
         //workaround for dots in the keys (problem with mongo)
         interaction = JSON.parse(escapeMetaCharacters(JSON.stringify(interaction)));
         Interactions.insert({
             consumer: consumerName,
             provider: providerName,
-            count: count || 1,
+            expected: expected,
+            count: count,
             disabled: false,
             interaction: interaction
         });
@@ -54,8 +55,7 @@ var fs = Npm.require('fs'),
             headers = interaction.headers || {},
             body = interaction.body || {},
             mergedSelector = _.defaults(selector || {}, {
-                'consumer': { $not: /UNEXPECTED/ },
-                'provider': { $not: /UNEXPECTED/ },
+                expected: { $gt: 0 },
                 'interaction.request.method': method.toLowerCase(),
                 'interaction.request.path': path,
                 disabled: false
@@ -144,11 +144,11 @@ var fs = Npm.require('fs'),
                             interaction: current
                         });
                     } else {
-                        Interactions.update({ _id: matchingInteraction._id }, { $inc: { count: 1 } });
+                        Interactions.update({ _id: matchingInteraction._id }, { $inc: { expected: 1 } });
                     }
                 },
                 errorCallback = function () {
-                    insertInteraction(consumerName, providerName, current);
+                    insertInteraction(consumerName, providerName, current, 1, 0);
                 };
             findInteraction(interaction, successCallback, errorCallback);
         });
@@ -161,27 +161,43 @@ var fs = Npm.require('fs'),
         }
     },
     verifyInteractions = function (req, res) {
-        var missingReqs = Interactions.find({
+        var registeredReqs = Interactions.find({
                 consumer: req.headers['x-pact-consumer'],
                 provider: req.headers['x-pact-provider'],
-                count: { $gt: 0 },
+                expected: {$gt: 0},
                 disabled: false
             }).fetch(),
-            unexpectedReqs = Interactions.find({ count: { $lt: 0 }, disabled: false }).fetch(),
+            missingReqs = _.filter(registeredReqs, function(current) { 
+                return current.count < current.expected; 
+            }),
+            unexpectedRegisteredReqs = _.filter(registeredReqs, function(current) { 
+                return current.count > current.expected; 
+            }),
+            unexpectedReqs = Interactions.find({ expected: 0 }).fetch(),
             resText;
-        if (missingReqs.length === 0 && unexpectedReqs.length === 0) {
+
+        if (missingReqs.length === 0 && unexpectedRegisteredReqs.length === 0 && unexpectedReqs.length === 0) {
             res.writeHead(200, { 'Content-Type': 'text/plain' });
             res.end('Interactions matched');
         } else {
             res.writeHead(500, { 'Content-Type': 'text/plain' });
-            resText = 'Actual interactions do not match expected interactions for mock MockService.\n';
+            resText = 'Actual interactions do not match expected interactions.\n';
             if (missingReqs.length > 0) {
                 resText += '\nMissing requests:\n';
                 _.each(missingReqs, function (element) {
                     resText += '\t' + element.consumer + '-' + element.provider + ': ';
                     resText += element.interaction.request.method.toUpperCase() + ' ';
                     resText += element.interaction.request.path;
-                    resText += ' (' + element.count + ' missing request/s)\n';
+                    resText += ' (' + (element.expected - element.count) + ' missing request/s)\n';
+                });
+            }
+            if (unexpectedRegisteredReqs.length > 0) {
+                resText += '\nRegistered but unexpected number of requests:\n';
+                _.each(unexpectedRegisteredReqs, function (element) {
+                    resText += '\t' + element.consumer + '-' + element.provider + ': ';
+                    resText += element.interaction.request.method.toUpperCase() + ' ';
+                    resText += element.interaction.request.path;
+                    resText += ' (' + (element.count - element.expected) + ' unexpected request/s)\n';
                 });
             }
             if (unexpectedReqs.length > 0) {
@@ -190,7 +206,7 @@ var fs = Npm.require('fs'),
                     resText += '\t' + element.consumer + '-' + element.provider + ': ';
                     resText += element.interaction.request.method.toUpperCase() + ' ';
                     resText += element.interaction.request.path;
-                    resText += ' (' + (-1 * element.count) + ' unexpected request/s)\n';
+                    resText += ' (' + element.count + ' unexpected request/s)\n';
                 });
             }
             res.end(resText);
@@ -198,8 +214,8 @@ var fs = Npm.require('fs'),
     },
     createPact = function (consumer, provider) {
         var interactions = Interactions.find({
-                $or : [ {consumer: consumer} , {consumer: 'NULL'} ],
-                $or : [ {provider: provider} , {provider: 'NULL'} ],
+                $or : [ {consumer: consumer} , {consumer: NULL} ],
+                $or : [ {provider: provider} , {provider: NULL} ],
                 disabled: false
             }).fetch(),
             pact = {
@@ -253,7 +269,7 @@ var fs = Npm.require('fs'),
             },
             successCallback = function (selectedInteraction) {
                 var expectedResponse = selectedInteraction.interaction.response;
-                Interactions.update({ _id: selectedInteraction._id }, { $inc: { count: -1 } });
+                Interactions.update({ _id: selectedInteraction._id }, { $inc: { count: 1 } });
                 res.writeHead(expectedResponse.status, expectedResponse.headers);
                 if (expectedResponse.headers && expectedResponse.headers["Content-Type"] === "application/xml") {
                     res.end(expectedResponse.body);
@@ -263,14 +279,13 @@ var fs = Npm.require('fs'),
             },
             errorCallback = function (err) {
                 // this is an unexpected interaction, verify if it has happened before
-                var UNEXPECTED = 'UNEXPECTED',
-                    innerSuccessCallback = function (selectedInteraction) {
-                        Interactions.update({ _id: selectedInteraction._id }, { $inc: { count: -1 } });
+                var innerSuccessCallback = function (selectedInteraction) {
+                        Interactions.update({ _id: selectedInteraction._id }, { $inc: { count: 1 } });
                         res.writeHead(500, { 'Content-Type': 'application/json' });
                         res.end(JSON.stringify(err));
                     },
                     innerErrorCallback = function () {
-                        insertInteraction(UNEXPECTED, UNEXPECTED, {
+                        insertInteraction(NULL, NULL, {
                             request: {
                                 method: method.toLowerCase(),
                                 path: path,
@@ -279,13 +294,12 @@ var fs = Npm.require('fs'),
                                 body: req.body
                             },
                             reponse: {}
-                        }, -1);
+                        }, 0, 1);
                         res.writeHead(500, { 'Content-Type': 'application/json' });
                         res.end(JSON.stringify(err));
                     },
                     selector = {
-                        'consumer': UNEXPECTED,
-                        'provider': UNEXPECTED
+                        expected: 0
                     };
                 findInteraction(interaction, innerSuccessCallback, innerErrorCallback, selector);
             };
@@ -359,8 +373,8 @@ Router.route('(.+)', function () {
 
 Meteor.methods({
     resetInteractions: function () {
-        Interactions.update({ count: { $gte: 0 } }, { $set : { count: 1 } }, { multi: true });
-        Interactions.remove({ count: { $lt: 0 } });
+        Interactions.update({ expected: { $gt: 0 } }, { $set : { count: 0 } }, { multi: true });
+        Interactions.remove({ expected: 0 });
     },
     clearInteractions: function () {
         Interactions.remove({});
@@ -375,11 +389,11 @@ Meteor.methods({
             },
             successCallback = function (matchingInteraction) {
                 if (consumer === matchingInteraction.consumer && provider === matchingInteraction.provider) {
-                    Interactions.update({ _id: matchingInteraction._id }, { $inc: { count: 1 } });
+                    Interactions.update({ _id: matchingInteraction._id }, { $inc: { expected: 1 } });
                 }
             },
             errorCallback = function () {
-                insertInteraction(consumer, provider, interaction);
+                insertInteraction(consumer, provider, interaction, 1, 0);
             };
         findInteraction(selector, successCallback, errorCallback);
     },

@@ -64,7 +64,7 @@
 
 <template name="interaction">
   <div class="ui icon buttons right floated">
-    <div class="ui basic button" id="toggleInteraction">
+    <div class="ui basic button" id="toggleInteraction" style="{{#if unexpectedHelper}}display: none{{/if}}">
       <i class="{{#if disabledHelper}}play{{else}}ban{{/if}} icon"></i>
     </div>
     <div class="ui basic button" id="removeInteraction">
@@ -73,8 +73,10 @@
   </div>
 
   <div class="title">
-    <div class="ui label {{#if receivedHelper}}green{{else}}red{{/if}}">{{countHelper}}</div>
-    <span class="{{#if receivedHelper}}green{{else}}red{{/if}}">
+    <div class="ui label {{colorHelper}}">
+      {{countHelper}}
+    </div>
+    <span class="{{colorHelper}}">
     <i class="dropdown icon"></i>
       {{interaction.request.method}} {{interaction.request.path}}{{{queryHelper interaction.request.query}}}
     </span>
