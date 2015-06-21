@@ -142,13 +142,20 @@ Template.interaction.helpers({
         }
         return color;
     },
+    allowDecrementHelper: function () {
+        return this.expected <= 1 ? "disabled" : "";
+    },
     unexpectedHelper: function () {
         return this.expected === 0;
     },
     countHelper: function () {
         var label = "Received";
         if (this.expected > 0) {
-            label += " (" + this.count + "/" + this.expected + ")";
+            if (this.count > 0) {
+                label += " (" + this.count + "/" + this.expected + ")";
+            } else {
+                label = "Missing (" + this.expected + ")";
+            }
         } else {
             label = "Unexpected";
             if (this.count > 1) {
@@ -170,6 +177,12 @@ Template.interaction.helpers({
 });
 
 Template.interaction.events({
+    'click #incrementInteraction': function () {
+        Interactions.update({ _id: this._id }, { $inc: { expected: 1 } });
+    },
+    'click #decrementInteraction': function () {
+        Interactions.update({ _id: this._id }, { $inc: { expected: -1 } });
+    },
     'click #removeInteraction': function () {
         Interactions.remove(this._id);
     },
