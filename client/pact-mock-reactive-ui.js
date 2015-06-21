@@ -145,8 +145,8 @@ Template.interaction.helpers({
     allowDecrementHelper: function () {
         return this.expected <= 1 ? "disabled" : "";
     },
-    unexpectedHelper: function () {
-        return this.expected === 0;
+    unexpectedDisabledHelper: function () {
+        return this.expected === 0 ? "disabled" : "";
     },
     countHelper: function () {
         var label = "Received";

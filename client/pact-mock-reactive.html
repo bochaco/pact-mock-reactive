@@ -64,13 +64,13 @@
 
 <template name="interaction">
   <div class="ui icon buttons right floated">
-    <div class="ui basic button" id="incrementInteraction" style="{{#if unexpectedHelper}}display: none{{/if}}">
+    <div class="ui basic button {{unexpectedDisabledHelper}}" id="incrementInteraction">
       <i class="plus icon"></i>
     </div>
-    <div class="ui basic button {{allowDecrementHelper}}" id="decrementInteraction" style="{{#if unexpectedHelper}}display: none{{/if}}">
+    <div class="ui basic button {{allowDecrementHelper}}" id="decrementInteraction">
       <i class="minus icon"></i>
     </div>
-    <div class="ui basic button" id="toggleInteraction" style="{{#if unexpectedHelper}}display: none{{/if}}">
+    <div class="ui basic button {{unexpectedDisabledHelper}}" id="toggleInteraction">
       <i class="{{#if disabledHelper}}play{{else}}ban{{/if}} icon"></i>
     </div>
     <div class="ui basic button" id="removeInteraction">
