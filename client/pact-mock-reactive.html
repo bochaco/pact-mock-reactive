@@ -120,8 +120,10 @@
         <div class="column" style="word-wrap: break-word">
           <div class="ui segment">
             <div class="ui right ribbon blue label">
-              <i class="mail outline icon"></i>Response
+               <i class="mail outline icon"></i>Response
             </div>
+            <div class="ui pointing right label">Status Code</div>
+            <span class="blue">{{interaction.response.status}}</span>
             <div class="item">
               <div class="content">
                 <div class="description">
@@ -202,7 +204,7 @@
             <label>Path</label>
             <input id="path" placeholder="Path" type="text" value="{{path}}">
           </div>
-          <div class="seven wide field">
+          <div class="seven wide field {{validObj query}}">
             <label>Query</label>
             <input id="query" placeholder="Query object" type="text" value="{{query}}">
           </div>
@@ -213,7 +215,7 @@
             <div class="column">
               <div class="ui bottom attached segment">
                 <h4 class="ui top attached label">Request</h4>
-                <div class="twelve wide field">
+                <div class="twelve wide field {{validObj reqHeaderObj}}">
                   <label>Headers</label>
                   <input id="reqHeaderObj" placeholder="Headers object" type="text" value="{{reqHeaderObj}}">
                 </div>
@@ -227,11 +229,11 @@
               <div class="ui bottom attached segment">
                 <h4 class="ui top attached label">Response</h4>
                 <div class="two fields">
-                  <div class="four wide field">
+                  <div class="four wide field {{validCode resStatus}}">
                     <label>Status Code</label>
                     <input id="resStatus" placeholder="Code" type="text" value="{{resStatus}}">
                   </div>
-                  <div class="twelve wide field">
+                  <div class="twelve wide field {{validObj resHeaderObj}}">
                     <label>Headers</label>
                     <input id="resHeaderObj" placeholder="Headers object" type="text" value="{{resHeaderObj}}">
                   </div>

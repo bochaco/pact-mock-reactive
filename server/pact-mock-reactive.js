@@ -380,6 +380,12 @@ Meteor.methods({
         Interactions.remove({});
     },
     addInteraction: function (consumer, provider, interaction) {
+        if (!consumer || !consumer.length) {
+            consumer = NULL;
+        }
+        if (!provider || !provider.length) {
+            provider = NULL;
+        }        
         var selector = {
                 method : interaction.request.method,
                 path : interaction.request.path,

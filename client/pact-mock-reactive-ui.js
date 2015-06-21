@@ -43,7 +43,7 @@ Meteor.startup(function () {
         'provider': "",
         'provider_state': "",
         'method': "",
-        'path': "",
+        'path': "/",
         'query': "",
         'reqHeaderObj': "",
         'reqObj': "",
@@ -69,16 +69,16 @@ Meteor.startup(function () {
                     provider_state: Session.get('provider_state'),
                     description: Session.get('description'),
                     request: {
-                        method: Session.get('method').toLowerCase(),
-                        path: Session.get('path'),
-                        query: JSON.parse(Session.get('query')),
-                        headers: JSON.parse(Session.get('reqHeaderObj')),
-                        body: JSON.parse(Session.get('reqObj'))
+                        method: Session.get('method').toLowerCase() || "get",
+                        path: Session.get('path') || "/",
+                        query: JSON.parse(Session.get('query') || "{}"),
+                        headers: JSON.parse(Session.get('reqHeaderObj') || "{}"),
+                        body: JSON.parse(Session.get('reqObj') || "{}")
                     },
                     response: {
                         status: Session.get('resStatus'),
-                        headers: JSON.parse(Session.get('resHeaderObj')),
-                        body: JSON.parse(Session.get('resObj'))
+                        headers: JSON.parse(Session.get('resHeaderObj') || "{}"),
+                        body: JSON.parse(Session.get('resObj') || "{}")
                     }
                 };
                 Meteor.call("addInteraction", Session.get('consumer'), Session.get('provider'), interaction);
@@ -228,6 +228,22 @@ Template.showPacts.helpers({
 });
 
 Template.addInteraction.helpers({
+    validStr: function (param) {
+        return param.length === 0 ? "error" : "";
+    },
+    validCode: function (param) {
+        return /^[0-9]+$/.test(param) ? "" : "error";
+    },
+    validObj: function (param) {
+        var ret = "";
+        try {
+            var validated = !param || JSON.parse(param);
+        } catch (e) {
+            // is not a valid JSON string
+            ret = "error";
+        }
+        return ret;
+    },
     description: function () {
         return Session.get('description');
     },
@@ -278,6 +294,9 @@ Template.addInteraction.helpers({
 
 Template.addInteraction.events({
     'change input': function (event) {
+        Session.set(event.target.id, event.target.value);
+    },
+    'change textarea': function (event) {
         Session.set(event.target.id, event.target.value);
     },
     'change #method': function (event) {
