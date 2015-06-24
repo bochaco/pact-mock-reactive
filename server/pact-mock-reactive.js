@@ -82,14 +82,14 @@ var fs = Npm.require('fs'),
             });
 
             // compare query of actual and expected
-            /*if (!_.isEqual(matchingInteraction.interaction.request.query || {}, query || {})) {
+            if (!_.isEqual(matchingInteraction.interaction.request.query || {}, query || {})) {
                 innerErr.push({
                     'query': {
                         'expected': matchingInteraction.interaction.request.query,
                         'actual': query
                     }
                 });
-            }*/
+            }
 
             // compare body of actual and expected
             if (!_.isEqual(matchingInteraction.interaction.request.body || {}, body || {})) {
