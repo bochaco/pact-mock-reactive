@@ -243,19 +243,22 @@ var fs = Npm.require('fs'),
         return pact;
     },
     writePact = function (req, res) {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
         if (req.body.consumer && req.body.consumer.name && req.body.provider && req.body.provider.name) {
             var pact = createPact(req.body.consumer.name, req.body.provider.name),
                 filename = (req.body.consumer.name.toLowerCase() + '-' + req.body.provider.name.toLowerCase()).replace(/\s/g, '_'),
-                path = appRoot + 'pacts/' + filename + '.json';
+                pactsDir = process.env.PACTS_DIR || appRoot + 'pacts',
+                path = pactsDir + '/' + filename + '.json';
             fs.writeFile(path, JSON.stringify(pact, null, 2), function (err) {
                 if (err) {
+                    res.writeHead(500, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({ 'message': 'Error ocurred in mock service: RuntimeError - pact file couldn\'t be saved' }));
                 } else {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify(pact));
                 }
             });
         } else {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ 'message': 'Error ocurred in mock service: RuntimeError - You must specify a consumer and provider name' }));
         }
     },
