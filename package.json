@@ -9,6 +9,8 @@
     "Santiago Bruno <santiago.emilio.bruno@gmail.com>"
   ],
    "files": [
+     ".meteor",
+     "pacts",
      "server",
      "client",
      "tests"
