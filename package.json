@@ -1,0 +1,37 @@
+{
+  "name": "pact-mock-reactive",
+  "version": "0.1.0",
+  "description": "Pact Mock with a Reactive UI",
+  "main": "server/pact-mock-reactive.js",
+  "contributors": [
+    "Gabriel Viganotti <gabrielviganotti@gmail.com>",
+    "Ezequiel Garcia <ezequiel.garcia88@gmail.com>",
+    "Santiago Bruno <santiago.emilio.bruno@gmail.com>"
+  ],
+   "files": [
+     "server",
+     "client",
+     "tests"
+  ],
+  "scripts": {
+    "start": "meteor run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bochaco/pact-mock-reactive.git"
+  },
+  "keywords": [
+    "pact",
+    "consumer",
+    "driven",
+    "contracts",
+    "mock",
+    "service"
+  ],
+  "author": "Gabriel Viganotti <gabrielviganotti@gmail.com> (https://github.com/bochaco)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bochaco/pact-mock-reactive/issues"
+  },
+  "homepage": "https://github.com/bochaco/pact-mock-reactive"
+}
