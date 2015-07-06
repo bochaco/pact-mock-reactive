@@ -149,7 +149,8 @@ var fs = Npm.require('fs'),
                 },
                 errorCallback = function () {
                     insertInteraction(consumerName, providerName, current, 1, 0);
-                };
+                },
+                areRulesOk = true;
 
             // make sure that the response matches any defined matching rule
             _.each (current.response.responseMatchingRules, function(value, key) {
@@ -159,19 +160,22 @@ var fs = Npm.require('fs'),
                         error: 'The attribute ' + key + ' doesn\'t exist in the response object',
                         interaction: current
                     });
-                }
-                if (value.regex) {
+                    areRulesOk = false;
+                } else if (value.regex) {
                     var pattern = new RegExp(value.regex);
                     if (!pattern.test(fieldValue)) {
                         errors.push({
                             error: 'The attribute ' + key + ' doesn\'t match the defined regex rule: ' + value.regex,
                             interaction: current
                         });
+                        areRulesOk = false;
                     }
                 }
             });
 
-            findInteraction(interaction, successCallback, errorCallback);
+            if (areRulesOk) {
+                findInteraction(interaction, successCallback, errorCallback);
+            }
         });
         if (errors.length > 0) {
             res.writeHead(500, { 'Content-Type': 'application/json' });
