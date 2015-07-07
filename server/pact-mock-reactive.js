@@ -350,6 +350,10 @@ var fs = Npm.require('fs'),
         }
     };
 
+Router.onBeforeAction(Iron.Router.bodyParser.text({
+    "type": "application/xml"
+}));	
+	
 Router.route('/interactions', { where: 'server' })
     .post(function () {
         normalizeConsumerProvider(this.request);
@@ -395,6 +399,7 @@ Router.route('(.+)', function () {
         this.response.writeHead(200, { 'Content-Type': 'application/json' });
         this.response.end();
     } else {
+		debugger;
         requestsHandler(this.method, '/' + this.params, this.params.query, this.request, this.response);
     }
 }, { where: 'server' });
