@@ -48,7 +48,7 @@ var fs = Npm.require('fs'),
             interaction: interaction
         });
     },
-    findInteraction = function (interaction, successCallback, errorCallback, selector) {
+    findInteraction = function (interaction, successCallback, errorCallback, selector, useMatchers) {
         var method = interaction.method,
             path = interaction.path,
             query = interaction.query || {},
@@ -60,6 +60,7 @@ var fs = Npm.require('fs'),
                 'interaction.request.path': path,
                 disabled: false
             }),
+            useMatchers = useMatchers || false,
             selectedInteraction,
             interactionDiffs = [],
             innerErr;
@@ -71,13 +72,29 @@ var fs = Npm.require('fs'),
             _.each(matchingInteraction.interaction.request.headers, function (value, key) {
                 var actualHdr = headers[key], // when comparing headers defined in the pact interaction
                     actualHdrLower = headers[String(key).toLowerCase()]; // when comparing with actual HTTP headers
-                if ((!actualHdr || actualHdr !== value) && (!actualHdrLower || actualHdrLower !== value)) {
-                    innerErr.push({
-                        'headers': {
-                            'expected': { key: key, value: value },
-                            'actual': { key: key, value: actualHdr }
+
+                if (useMatchers) {
+                    var hdrMatcher = matchingInteraction.interaction.request.requestMatchingRules['$.headers.' + key];
+                    if (hdrMatcher) {
+                        var pattern = new RegExp(hdrMatcher.regex);
+                        if ((!actualHdr || !pattern.test(actualHdr)) && (!actualHdrLower || !pattern.test(actualHdrLower))) {
+                            innerErr.push({
+                                'headers': {
+                                    'expected with matching rule': { key: key, value: hdrMatcher.regex },
+                                    'actual': { key: key, value: actualHdr || actualHdrLower}
+                                }
+                            });
                         }
-                    });
+                    }
+                } else {
+                    if ((!actualHdr || actualHdr !== value) && (!actualHdrLower || actualHdrLower !== value)) {
+                        innerErr.push({
+                            'headers': {
+                                'expected': { key: key, value: value },
+                                'actual': { key: key, value: actualHdr || actualHdrLower}
+                            }
+                        });
+                    }
                 }
             });
 
@@ -152,6 +169,27 @@ var fs = Npm.require('fs'),
                 },
                 areRulesOk = true;
 
+            // make sure that the request matches any defined matching rule
+            _.each (current.request.requestMatchingRules, function(value, key) {
+                var field = key.replace('$.headers.', ''),
+                    fieldValue = current.request.headers[field];
+                if (!fieldValue) {
+                    errors.push({
+                        error: 'The attribute ' + field + ' doesn\'t exist in the request object',
+                        interaction: current
+                    });
+                    areRulesOk = false;
+                } else if (value.regex) {
+                    var pattern = new RegExp(value.regex);
+                    if (!pattern.test(fieldValue)) {
+                        errors.push({
+                            error: 'The value of ' + field + ' doesn\'t match the defined regex rule in the request: ' + value.regex,
+                            interaction: current
+                        });
+                        areRulesOk = false;
+                    }
+                }
+            });
             // make sure that the response matches any defined matching rule
             _.each (current.response.responseMatchingRules, function(value, key) {
                 var fieldValue = eval(key.replace('$', 'current.response'));
@@ -165,7 +203,7 @@ var fs = Npm.require('fs'),
                     var pattern = new RegExp(value.regex);
                     if (!pattern.test(fieldValue)) {
                         errors.push({
-                            error: 'The attribute ' + key + ' doesn\'t match the defined regex rule: ' + value.regex,
+                            error: 'The value of ' + key + ' doesn\'t match the defined regex rule in the response: ' + value.regex,
                             interaction: current
                         });
                         areRulesOk = false;
@@ -331,7 +369,7 @@ var fs = Npm.require('fs'),
                     };
                 findInteraction(interaction, innerSuccessCallback, innerErrorCallback, selector);
             };
-        findInteraction(interaction, successCallback, errorCallback);
+        findInteraction(interaction, successCallback, errorCallback, undefined, true);
     },
     routeInteractions = function (route) {
         var headers = route.request.headers;
