@@ -92,7 +92,7 @@ Meteor.startup(function () {
             },
             onApprove : function () {
                 var pactFile = Session.get("importPactFile");
-                _.each(pactFile.interactions, function(interaction) {
+                _.each(pactFile.interactions, function (interaction) {
                     Meteor.call("addInteraction", pactFile.consumer.name, pactFile.provider.name, interaction);
                 });
             }
@@ -232,17 +232,18 @@ Template.addInteraction.helpers({
         return param.length === 0 ? "error" : "";
     },
     validCode: function (param) {
-        return /^[0-9]+$/.test(param) ? "" : "error";
+        return (/^[0-9]+$/).test(param) ? "" : "error";
     },
     validObj: function (param) {
-        var ret = "";
-        try {
-            var validated = !param || JSON.parse(param);
-        } catch (e) {
-            // is not a valid JSON string
-            ret = "error";
+        if (!param) {
+            return "";
         }
-        return ret;
+        try {
+            JSON.parse(param);
+        } catch (e) {
+            return "error";
+        }
+        return "";
     },
     description: function () {
         return Session.get('description');
@@ -313,10 +314,10 @@ Template.importPactFile.helpers({
 Template.importPactFile.events({
     'change .importPactFile': function (event) {
         var reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
             Session.set("importPactFile", JSON.parse(e.target.result));
             Session.set("importFilename", event.target.files[0].name);
-        }
+        };
         reader.readAsText(event.target.files[0]);
     }
 });

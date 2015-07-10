@@ -1,4 +1,6 @@
-var NULL = "NULL",
+_ = lodash;
+
+var NULL = 'NULL',
     escapeMetaCharacters = function (string) {
         return string.replace(/\$/g, '\\uff04').replace(/\./g, '\\uff0E');
     },
@@ -25,15 +27,15 @@ appRoot = appRoot.indexOf('.meteor') >= 0 ? appRoot.substring(0, appRoot.indexOf
 
 var fs = Npm.require('fs'),
     normalizeConsumerProvider = function (req) {
-        req.headers['x-pact-consumer'] = req.headers['x-pact-consumer'] || 'NULL';
-        req.headers['x-pact-provider'] = req.headers['x-pact-provider'] || 'NULL';
+        req.headers['x-pact-consumer'] = req.headers['x-pact-consumer'] || NULL;
+        req.headers['x-pact-provider'] = req.headers['x-pact-provider'] || NULL;
     },
     deleteInteractions = function (req) {
         var consumerName = req.headers['x-pact-consumer'],
             providerName = req.headers['x-pact-provider'];
 
         Interactions.remove({
-            $or: [ {consumer: consumerName}, {provider: providerName}, {expected: 0} ]
+            $or: [{ consumer: consumerName }, { provider: providerName }, { expected: 0 }]
         });
     },
     insertInteraction = function (consumerName, providerName, interaction, expected, count) {
@@ -60,10 +62,10 @@ var fs = Npm.require('fs'),
                 'interaction.request.path': path,
                 disabled: false
             }),
-            useMatchers = useMatchers || false,
             selectedInteraction,
             interactionDiffs = [],
-            innerErr;
+            innerErr,
+            bodyMatcher;
 
         _.each(Interactions.find(mergedSelector).fetch(), function (matchingInteraction) {
             innerErr = [];
@@ -71,20 +73,23 @@ var fs = Npm.require('fs'),
             // iterate thru expected headers to make sure it's in the actual header
             _.each(matchingInteraction.interaction.request.headers, function (value, key) {
                 var actualHdr = headers[key], // when comparing headers defined in the pact interaction
-                    actualHdrLower = headers[String(key).toLowerCase()]; // when comparing with actual HTTP headers
+                    actualHdrLower = headers[String(key).toLowerCase()], // when comparing with actual HTTP headers
+                    hdrMatcher = _.get(matchingInteraction.interaction.request.requestMatchingRules, '$.headers.' + key),
+                    pattern;
 
-                if (useMatchers) {
-                    var hdrMatcher = matchingInteraction.interaction.request.requestMatchingRules['$.headers.' + key];
-                    if (hdrMatcher) {
-                        var pattern = new RegExp(hdrMatcher.regex);
+                if (useMatchers && hdrMatcher) {
+                    if (hdrMatcher.regex) {
+                        pattern = new RegExp(hdrMatcher.regex);
                         if ((!actualHdr || !pattern.test(actualHdr)) && (!actualHdrLower || !pattern.test(actualHdrLower))) {
                             innerErr.push({
                                 'headers': {
                                     'expected with matching rule': { key: key, value: hdrMatcher.regex },
-                                    'actual': { key: key, value: actualHdr || actualHdrLower}
+                                    'actual': { key: key, value: actualHdr || actualHdrLower }
                                 }
                             });
                         }
+                    } else if (hdrMatcher.match) {
+                        //TODO complete this part of the matcher
                     }
                 } else {
                     if ((!actualHdr || actualHdr !== value) && (!actualHdrLower || actualHdrLower !== value)) {
@@ -109,14 +114,45 @@ var fs = Npm.require('fs'),
             }
 
             // compare body of actual and expected
-            if (!_.isEqual(matchingInteraction.interaction.request.body || {}, body || {})) {
-                innerErr.push({
-                    'body': {
-                        'expected': matchingInteraction.interaction.request.body,
-                        'actual': body
+            bodyMatcher = (function () {
+                var matcher = [];
+                _.each(matchingInteraction.interaction.request.requestMatchingRules, function (value, key) {
+                    if (key.indexOf('$.body') === 0) {
+                        matcher.push({
+                            key : key.replace('$.body.', ''),
+                            value : value
+                        });
                     }
                 });
+                return matcher.length > 0 ? matcher : undefined;
+            }());
+            if (useMatchers && bodyMatcher) {
+                _.each(bodyMatcher, function (item) {
+                    if (item.value.regex) {
+                        var val = _.get(body, item.key);
+                        if (!val || !(new RegExp(item.value.regex)).test(val)) {
+                            innerErr.push({
+                                'body': {
+                                    'expected with matching rule': { key: item.key, value: item.value.regex },
+                                    'actual': { key: item.key, value: val }
+                                }
+                            });
+                        }
+                    } else if (item.value.match) {
+                        //TODO complete this part of the matcher
+                    }
+                });
+            } else {
+                if (!_.isEqual(matchingInteraction.interaction.request.body || {}, body || {})) {
+                    innerErr.push({
+                        'body': {
+                            'expected': matchingInteraction.interaction.request.body,
+                            'actual': body
+                        }
+                    });
+                }
             }
+
             if (innerErr.length === 0) {
                 selectedInteraction = matchingInteraction;
             } else {
@@ -139,14 +175,13 @@ var fs = Npm.require('fs'),
             errors = [];
 
         if (req.body.interactions) {
-            _.each (req.body.interactions, function(current) {
+            _.each(req.body.interactions, function (current) {
                 newInteractions.push(current);
             });
-            deleteInteractions(req);
         } else {
             newInteractions.push(req.body);
         }
-        _.each (newInteractions, function(current) {
+        _.each(newInteractions, function (current) {
             var interaction = {
                     method : current.request.method,
                     path : current.request.path,
@@ -170,20 +205,18 @@ var fs = Npm.require('fs'),
                 areRulesOk = true;
 
             // make sure that the request matches any defined matching rule
-            _.each (current.request.requestMatchingRules, function(value, key) {
-                var field = key.replace('$.headers.', ''),
-                    fieldValue = current.request.headers[field];
+            _.each(current.request.requestMatchingRules, function (value, key) {
+                var fieldValue = _.get(current, key.replace('$', 'request'));
                 if (!fieldValue) {
                     errors.push({
-                        error: 'The attribute ' + field + ' doesn\'t exist in the request object',
+                        error: 'The attribute ' + key + ' doesn\'t exist in the request object',
                         interaction: current
                     });
                     areRulesOk = false;
                 } else if (value.regex) {
-                    var pattern = new RegExp(value.regex);
-                    if (!pattern.test(fieldValue)) {
+                    if (!(new RegExp(value.regex)).test(fieldValue)) {
                         errors.push({
-                            error: 'The value of ' + field + ' doesn\'t match the defined regex rule in the request: ' + value.regex,
+                            error: 'The value of ' + key + ' doesn\'t match the defined regex rule in the request: ' + value.regex,
                             interaction: current
                         });
                         areRulesOk = false;
@@ -191,8 +224,8 @@ var fs = Npm.require('fs'),
                 }
             });
             // make sure that the response matches any defined matching rule
-            _.each (current.response.responseMatchingRules, function(value, key) {
-                var fieldValue = eval(key.replace('$', 'current.response'));
+            _.each(current.response.responseMatchingRules, function (value, key) {
+                var fieldValue = _.get(current, key.replace('$', 'response'));
                 if (!fieldValue) {
                     errors.push({
                         error: 'The attribute ' + key + ' doesn\'t exist in the response object',
@@ -200,8 +233,7 @@ var fs = Npm.require('fs'),
                     });
                     areRulesOk = false;
                 } else if (value.regex) {
-                    var pattern = new RegExp(value.regex);
-                    if (!pattern.test(fieldValue)) {
+                    if (!(new RegExp(value.regex)).test(fieldValue)) {
                         errors.push({
                             error: 'The value of ' + key + ' doesn\'t match the defined regex rule in the response: ' + value.regex,
                             interaction: current
@@ -225,16 +257,16 @@ var fs = Npm.require('fs'),
     },
     verifyInteractions = function (req, res) {
         var registeredReqs = Interactions.find({
-                consumer: req.headers['x-pact-consumer'],
-                provider: req.headers['x-pact-provider'],
-                expected: {$gt: 0},
-                disabled: false
-            }).fetch(),
-            missingReqs = _.filter(registeredReqs, function(current) { 
-                return current.count < current.expected; 
+            consumer: req.headers['x-pact-consumer'],
+            provider: req.headers['x-pact-provider'],
+            expected: { $gt: 0 },
+            disabled: false
+        }).fetch(),
+            missingReqs = _.filter(registeredReqs, function (current) {
+                return current.count < current.expected;
             }),
-            unexpectedRegisteredReqs = _.filter(registeredReqs, function(current) { 
-                return current.count > current.expected; 
+            unexpectedRegisteredReqs = _.filter(registeredReqs, function (current) {
+                return current.count > current.expected;
             }),
             unexpectedReqs = Interactions.find({ expected: 0 }).fetch(),
             resText;
@@ -277,10 +309,10 @@ var fs = Npm.require('fs'),
     },
     createPact = function (consumer, provider) {
         var interactions = Interactions.find({
-                $or : [ {consumer: consumer} , {consumer: NULL} ],
-                $or : [ {provider: provider} , {provider: NULL} ],
-                disabled: false
-            }).fetch(),
+            $and : [{ $or : [{ consumer: consumer }, { consumer: NULL }] },
+                    { $or : [{ provider: provider }, { provider: NULL }] }],
+            disabled: false
+        }).fetch(),
             pact = {
                 consumer: {
                     name: consumer
@@ -290,19 +322,17 @@ var fs = Npm.require('fs'),
                 },
                 interactions: [],
                 metadata: {
-                    "pact-specification": {
+                    'pact-specification': {
                         version: '2.0.0'
                     },
-                    "pact-mock-reactive": {
+                    'pact-mock-reactive': {
                         version: '0.1.0'
                     }
                 }
             };
-
         _.each(interactions, function (element) {
             pact.interactions.push(element.interaction);
         });
-
         return pact;
     },
     writePact = function (req, res) {
@@ -311,7 +341,7 @@ var fs = Npm.require('fs'),
                 filename = (req.body.consumer.name.toLowerCase() + '-' + req.body.provider.name.toLowerCase()).replace(/\s/g, '_'),
                 pactsDir = process.env.PACTS_DIR || appRoot + 'pacts',
                 path = pactsDir + '/' + filename + '.json';
-            fs.writeFile(path, JSON.stringify(pact, null, 2), function (err) {
+            fs.writeFile(path, JSON.stringify(pact, null, 4), function (err) {
                 if (err) {
                     res.writeHead(500, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({ 'message': 'Error ocurred in mock service: RuntimeError - pact file couldn\'t be saved' }));
@@ -327,29 +357,26 @@ var fs = Npm.require('fs'),
     },
     requestsHandler = function (method, path, query, req, res) {
         var interaction = {
-                method : method,
-                path : path,
-                query : query,
-                headers : req.headers,
-                body : req.body
-            },
+            method : method,
+            path : path,
+            query : query,
+            headers : req.headers,
+            body : req.body
+        },
             successCallback = function (selectedInteraction) {
-                var expectedResponse = selectedInteraction.interaction.response;
+                var expectedResponse = selectedInteraction.interaction.response,
+                    expectedBody = expectedResponse.body;
                 Interactions.update({ _id: selectedInteraction._id }, { $inc: { count: 1 } });
                 res.writeHead(expectedResponse.status, expectedResponse.headers);
-                if (expectedResponse.headers && expectedResponse.headers["Content-Type"] === "application/xml") {
-                    res.end(expectedResponse.body);
-                } else {
-                    res.end(JSON.stringify(expectedResponse.body));
-                }
+                res.end(_.isObject(expectedBody) ? JSON.stringify(expectedResponse.body) : expectedBody);
             },
             errorCallback = function (err) {
                 // this is an unexpected interaction, verify if it has happened before
                 var innerSuccessCallback = function (selectedInteraction) {
-                        Interactions.update({ _id: selectedInteraction._id }, { $inc: { count: 1 } });
-                        res.writeHead(500, { 'Content-Type': 'application/json' });
-                        res.end(JSON.stringify(err));
-                    },
+                    Interactions.update({ _id: selectedInteraction._id }, { $inc: { count: 1 } });
+                    res.writeHead(500, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify(err));
+                },
                     innerErrorCallback = function () {
                         insertInteraction(NULL, NULL, {
                             request: {
@@ -389,15 +416,15 @@ var fs = Npm.require('fs'),
     };
 
 Router.onBeforeAction(Iron.Router.bodyParser.text({
-    "type": "application/xml"
-}));	
-	
+    'type': 'application/xml'
+}));
+
 Router.route('/interactions', { where: 'server' })
     .post(function () {
         normalizeConsumerProvider(this.request);
         routeInteractions(this);
     })
-        .put(function () {
+    .put(function () {
         normalizeConsumerProvider(this.request);
         routeInteractions(this);
     })
@@ -428,7 +455,7 @@ Router.route('/pact', { where: 'server' })
     .post(function () {
         routePact(this);
     })
-        .put(function () {
+    .put(function () {
         routePact(this);
     });
 
@@ -437,7 +464,6 @@ Router.route('(.+)', function () {
         this.response.writeHead(200, { 'Content-Type': 'application/json' });
         this.response.end();
     } else {
-		debugger;
         requestsHandler(this.method, '/' + this.params, this.params.query, this.request, this.response);
     }
 }, { where: 'server' });
@@ -456,14 +482,14 @@ Meteor.methods({
         }
         if (!provider || !provider.length) {
             provider = NULL;
-        }        
+        }
         var selector = {
-                method : interaction.request.method,
-                path : interaction.request.path,
-                query : interaction.request.query,
-                headers : interaction.request.headers,
-                body : interaction.request.body
-            },
+            method : interaction.request.method,
+            path : interaction.request.path,
+            query : interaction.request.query,
+            headers : interaction.request.headers,
+            body : interaction.request.body
+        },
             successCallback = function (matchingInteraction) {
                 if (consumer === matchingInteraction.consumer && provider === matchingInteraction.provider) {
                     Interactions.update({ _id: matchingInteraction._id }, { $inc: { expected: 1 } });
