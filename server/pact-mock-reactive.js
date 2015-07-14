@@ -59,23 +59,35 @@ var fs = Npm.require('fs'),
             mergedSelector = _.defaults(selector || {}, {
                 expected: { $gt: 0 },
                 'interaction.request.method': method.toLowerCase(),
-                'interaction.request.path': path,
                 disabled: false
             }),
             selectedInteraction,
             interactionDiffs = [],
             innerErr,
-            bodyMatcher;
+            bodyMatcher,
+            pathMatcher,
+            pattern;
 
         _.each(Interactions.find(mergedSelector).fetch(), function (matchingInteraction) {
             innerErr = [];
+
+            // compare path of actual and expected, considering matching rules
+            pathMatcher = _.get(matchingInteraction.interaction.request.requestMatchingRules, '$.path');
+            if (useMatchers && pathMatcher && pathMatcher.regex) {
+                pattern = new RegExp(pathMatcher.regex);
+                if (!pattern.test(path)) {
+                    return;
+                }
+            } else if (matchingInteraction.interaction.request.path !== path) {
+                return;
+            }
+
             // compare headers of actual and expected
             // iterate thru expected headers to make sure it's in the actual header
             _.each(matchingInteraction.interaction.request.headers, function (value, key) {
                 var actualHdr = headers[key], // when comparing headers defined in the pact interaction
                     actualHdrLower = headers[String(key).toLowerCase()], // when comparing with actual HTTP headers
-                    hdrMatcher = _.get(matchingInteraction.interaction.request.requestMatchingRules, '$.headers.' + key),
-                    pattern;
+                    hdrMatcher = _.get(matchingInteraction.interaction.request.requestMatchingRules, '$.headers.' + key);
 
                 if (useMatchers && hdrMatcher) {
                     if (hdrMatcher.regex) {
