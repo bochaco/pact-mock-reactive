@@ -18,7 +18,7 @@ The mock service provides the following HTTP endpoints in the backend:
 * GET /interactions/verification - determine whether the expected interactions have taken place
 * POST /pact - write the pact file
 
-Note that pact file format is compatible with [Pact JVM][pact-jvm].
+**Note that pact file format is compatible with [Pact JVM][pact-jvm].**
 
 As the Pact mock service can be used as a standalone executable and administered via HTTP, it can be used for testing with any language. All that is required is a library in the native language to create the HTTP calls listed above. Currently there are binding for [Ruby][pact] and [Javascript][javascript].
 
@@ -56,6 +56,7 @@ Coming soon...
 Coming soon...
 
 [pact]: https://github.com/realestate-com-au/pact
+[javascript]: https://github.com/DiUS/pact-consumer-js-dsl
 [meteor]: http://www.meteor.com
 [meteor-install]: https://www.meteor.com/install
 [pack-mock_service]: https://github.com/bethesque/pact-mock_service
