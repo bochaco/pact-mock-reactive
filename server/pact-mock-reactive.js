@@ -218,9 +218,8 @@ var fs = Npm.require('fs'),
 
             // make sure that the request matches any defined matching rule
             _.each(current.request.requestMatchingRules, function (value, key) {
-                var keyInRequest = key.replace('$', 'request');
-                var fieldValue = _.get(current, keyInRequest);
-                if (!_.has(current, keyInRequest)) {
+                var fieldValue = _.get(current, key.replace('$', 'request'));
+                if (fieldValue === undefined) {
                     errors.push({
                         error: 'The attribute ' + key + ' doesn\'t exist in the request object',
                         interaction: current
@@ -238,9 +237,8 @@ var fs = Npm.require('fs'),
             });
             // make sure that the response matches any defined matching rule
             _.each(current.response.responseMatchingRules, function (value, key) {
-                var keyInResponse = key.replace('$', 'response');
-                var fieldValue = _.get(current, keyInResponse);
-                if (!_.has(current, keyInResponse)) {
+                var fieldValue = _.get(current, key.replace('$', 'response'));
+                if (fieldValue === undefined) {
                     errors.push({
                         error: 'The attribute ' + key + ' doesn\'t exist in the response object',
                         interaction: current
