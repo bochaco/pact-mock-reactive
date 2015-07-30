@@ -56,7 +56,7 @@ However, the mentioned bindings do not support registration of interactions for 
 In order to support multiple consumer-provider pairs, all that is required is to send the consumer and provider names as headers of each HTTP request sent to the mock service, e.g.:
 ```
 X-Pact-Consumer: ConsumerService
-X-Pact_Provider: ProviderService
+X-Pact-Provider: ProviderService
 ```
 The Web based UI will display the list of interaction showing the consumer and provider eacho of them is registered for. Additionally, the mock service will write a separate pact file containig the interactions of each consumer-provider pair.
 
