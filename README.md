@@ -37,19 +37,28 @@ Additionally, this mock service provides the following features in the frontend 
 
 1. Install [Meteor][meteor-install]
 2. Clone this repository
-   ```
-   $ git clone https://github.com/bochaco/pact-mock-reactive
-   ```
-3. Run the appliction
-   ```
-   $ cd pact-mock-reactive
-   $ meteor run
-   ```
+```
+  $ git clone https://github.com/bochaco/pact-mock-reactive
+```
+3. Run the application
+```
+  $ cd pact-mock-reactive
+  $ meteor run
+```
 4. Open your web browser and go to http://localhost:3000 to see the frontend UI:
 
-## Registering interactions for multiple consumer-provider pairs
+## Interactions for multiple consumer-provider pairs
 
-Coming soon...
+As mentioned above, this Pact mock service can be used as a standalone executable and administered via HTTP, it can be used for testing with any language. All that is required is a library in the native language to create the HTTP calls listed above. Currently there are binding for [Ruby][pact] and [Javascript][javascript], this mock service is compatible with any of them.
+
+However, the mentioned bindings do not support registration of interactions for more than one consumer-provider pair against a single mock service instance. This is why a [branch of the Javascript][javascript-branch] binding was created to add such a support for multiple consumer-provider against  single instance of this mock service.
+
+In order to support multiple consumer-provider pairs, all that is required is to send the consumer and provider names as headers of each HTTP request sent to the mock service, e.g.:
+```
+X-Pact-Consumer: ConsumerService
+X-Pact_Provider: ProviderService
+```
+The Web based UI will display the list of interaction showing the consumer and provider eacho of them is registered for. Additionally, the mock service will write a separate pact file containig the interactions of each consumer-provider pair.
 
 ## Contributing
 
@@ -61,3 +70,4 @@ Coming soon...
 [meteor-install]: https://www.meteor.com/install
 [pack-mock_service]: https://github.com/bethesque/pact-mock_service
 [pact-jvm]: https://github.com/DiUS/pact-jvm
+[javascript-branch]: https://github.com/bochaco/pact-consumer-js-dsl
