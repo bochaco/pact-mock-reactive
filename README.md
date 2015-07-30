@@ -35,17 +35,17 @@ Additionally, this mock service provides the following features in the frontend 
 
 ## Usage
 
-1. Install [Meteor][meteor-install]
-2. Clone this repository
+######1. Install [Meteor][meteor-install]
+######2. Clone this repository
 ```
   $ git clone https://github.com/bochaco/pact-mock-reactive
 ```
-3. Run the application
+######3. Run the application
 ```
   $ cd pact-mock-reactive
   $ meteor run
 ```
-4. Open your web browser and go to http://localhost:3000 to see the frontend UI:
+######4. Open your web browser and go to http://localhost:3000 to see the frontend UI:
 
 ## Interactions for multiple consumer-provider pairs
 
