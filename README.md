@@ -49,16 +49,16 @@ Additionally, this mock service provides the following features in the frontend 
 
 ## Interactions for multiple consumer-provider pairs
 
-As mentioned above, this Pact mock service can be used as a standalone executable and administered via HTTP, it can be used for testing with any language. All that is required is a library in the native language to create the HTTP calls listed above. Currently there are binding for [Ruby][pact] and [Javascript][javascript], this mock service is compatible with any of them.
+As mentioned above, this Pact mock service can be used as a standalone executable and administered via HTTP, it can be used for testing with any language. All that is required is a library in the native language to create the HTTP calls listed above. Currently there are binding for [Ruby][pact] and [Javascript][javascript], and this mock service is compatible with any of them.
 
-However, the mentioned bindings do not support registration of interactions for more than one consumer-provider pair against a single mock service instance. This is why a [branch of the Javascript][javascript-branch] binding was created to add such a support for multiple consumer-provider against  single instance of this mock service.
+However, the mentioned bindings do not support registration of interactions for more than one consumer-provider pair against a single mock service instance. This is why a [branch of the Javascript][javascript-branch] binding was created to add such a support for multiple consumer-provider against single instance of this mock service.
 
-In order to support multiple consumer-provider pairs, all that is required is to send the consumer and provider names as headers of each HTTP request sent to the mock service, e.g.:
+In order to support multiple consumer-provider pairs, the only thing needed is to include the consumer and provider names as headers for each HTTP request sent to the mock service, e.g.:
 ```
 X-Pact-Consumer: ConsumerService
 X-Pact-Provider: ProviderService
 ```
-The Web based UI will display the list of interaction showing the consumer and provider eacho of them is registered for. Additionally, the mock service will write a separate pact file containig the interactions of each consumer-provider pair.
+The Web based UI displays the list of registered interactions showing the consumer and provider each of them is registered for. Additionally, the mock service writes an independent Pact file for each consumer-provider pair.
 
 ## Contributing
 
