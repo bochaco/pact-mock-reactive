@@ -47,6 +47,17 @@ Additionally, this mock service provides the following features in the frontend 
 ```
 ######4. Open your web browser and go to http://localhost:3000 to see the frontend UI:
 
+## Screenshots
+
+View of all registered/received interactions:
+![View of all registered/received interactions](https://github.com/bochaco/pact-mock-reactive/blob/master/doc/screenshot1.png)
+
+View of the Pact contract file:
+![View of the Pact contract file](https://github.com/bochaco/pact-mock-reactive/blob/master/doc/screenshot2.png)
+
+Form to register new interactions:
+![Form to register new interactions](https://github.com/bochaco/pact-mock-reactive/blob/master/doc/screenshot3.png)
+
 ## Interactions for multiple consumer-provider pairs
 
 As mentioned above, this Pact mock service can be used as a standalone executable and administered via HTTP, it can be used for testing with any language. All that is required is a library in the native language to create the HTTP calls listed above. Currently there are binding for [Ruby][pact] and [Javascript][javascript], and this mock service is compatible with any of them.
