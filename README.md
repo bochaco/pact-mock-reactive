@@ -45,7 +45,7 @@ Additionally, this mock service provides the following features in the frontend 
   $ cd pact-mock-reactive
   $ meteor run
 ```
-######4. Open your web browser and go to http://localhost:3000 to see the frontend UI:
+######4. Open your web browser and go to http://localhost:3000 to see the frontend UI
 
 ## Screenshots
 
