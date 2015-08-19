@@ -1,6 +1,6 @@
 # Pact Mock with a Reactive UI
 
-This codebase provider a mock service which can be used with implementations of [Pact][pact]. Apart from its backend service, it also exposes a reactive Web based UI where all the activity related to registering y verifying Pact interactions are displayed in real time. 
+This codebase provider a mock service which can be used with implementations of [Pact][pact]. Apart from its backend service, it also exposes a reactive Web based UI where all the activity related to registering and verifying Pact interactions are displayed in real time. 
 
 This mock service is implemented as a [Meteor][meteor] stand alone application, and it works on Linux and Windows (OS X not tested but it should also work) platforms.
 
@@ -20,7 +20,7 @@ The mock service provides the following HTTP endpoints in the backend:
 
 **Note that pact file format is compatible with [Pact JVM][pact-jvm].**
 
-As the Pact mock service can be used as a standalone executable and administered via HTTP, it can be used for testing with any language. All that is required is a library in the native language to create the HTTP calls listed above. Currently there are binding for [Ruby][pact] and [Javascript][javascript].
+As the Pact mock service can be used as a standalone executable and administered via HTTP, it can be used for testing with any language. All that is required is just a library in the native language to create the HTTP calls listed above. Currently there are binding for [Ruby][pact] and [Javascript][javascript].
 
 Additionally, this mock service provides the following features in the frontend Web based UI, displaying the information in real time as the backend endpoints are exercised:
 
