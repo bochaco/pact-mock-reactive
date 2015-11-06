@@ -21,6 +21,7 @@ Meteor.startup(function () {
 });
 
 var pathNpm = Npm.require('path'),
+    jsonpath = Meteor.npmRequire('jsonpath'),
     appRoot = pathNpm.resolve('.');
 // find better way
 appRoot = appRoot.indexOf('.meteor') >= 0 ? appRoot.substring(0, appRoot.indexOf('.meteor')) : appRoot;
@@ -218,39 +219,73 @@ var fs = Npm.require('fs'),
 
             // make sure that the request matches any defined matching rule
             _.each(current.request.requestMatchingRules, function (value, key) {
-                var fieldValue = _.get(current, key.replace('$', 'request'));
-                if (fieldValue === undefined) {
+                var fieldValues = jsonpath.query(current.request, key);
+                if (fieldValues.length === 0) {
                     errors.push({
                         error: 'The attribute ' + key + ' doesn\'t exist in the request object',
                         interaction: current
                     });
                     areRulesOk = false;
-                } else if (value.regex) {
-                    if (!(new RegExp(value.regex)).test(fieldValue)) {
-                        errors.push({
-                            error: 'The value of ' + key + ' doesn\'t match the defined regex rule in the request: ' + value.regex,
-                            interaction: current
-                        });
-                        areRulesOk = false;
+                } else {
+                    for (var i=0; i<fieldValues.length; i++) {
+                        fieldValue = fieldValues[i];
+                        if (value.regex) {
+                            if (!(new RegExp(value.regex)).test(fieldValue)) {
+                                errors.push({
+                                    error: 'The value of ' + key + ' (' + fieldValue + ') doesn\'t match the defined regex rule in the request: ' + value.regex,
+                                    interaction: current
+                                });
+                                areRulesOk = false;
+                            }
+                        } else if (value.min !== undefined && fieldValue.length < value.min) {
+                                errors.push({
+                                    error: 'The length of ' + key + ' (' + fieldValue.length + ') is less than the minimum (' + value.min + ')',
+                                    interaction: current
+                                });
+                                areRulesOk = false;
+                        } else if (value.max !== undefined && fieldValue.length > value.max) {
+                                errors.push({
+                                    error: 'The length of ' + key + ' (' + fieldValue.length + ') is greater than the maximum (' + value.max + ')',
+                                    interaction: current
+                                });
+                                areRulesOk = false;
+                        }
                     }
                 }
             });
             // make sure that the response matches any defined matching rule
             _.each(current.response.responseMatchingRules, function (value, key) {
-                var fieldValue = _.get(current, key.replace('$', 'response'));
-                if (fieldValue === undefined) {
+                var fieldValues = jsonpath.query(current.response, key);
+                if (fieldValues.length === 0) {
                     errors.push({
                         error: 'The attribute ' + key + ' doesn\'t exist in the response object',
                         interaction: current
                     });
                     areRulesOk = false;
-                } else if (value.regex) {
-                    if (!(new RegExp(value.regex)).test(fieldValue)) {
-                        errors.push({
-                            error: 'The value of ' + key + ' doesn\'t match the defined regex rule in the response: ' + value.regex,
-                            interaction: current
-                        });
-                        areRulesOk = false;
+                } else {
+                    for (var i=0; i<fieldValues.length; i++) {
+                        fieldValue = fieldValues[i];
+                        if (value.regex) {
+                            if (!(new RegExp(value.regex)).test(fieldValue)) {
+                                errors.push({
+                                    error: 'The value of ' + key + ' (' + fieldValue + ') doesn\'t match the defined regex rule in the response: ' + value.regex,
+                                    interaction: current
+                                });
+                                areRulesOk = false;
+                            }
+                        } else if (value.min !== undefined && fieldValue.length < value.min) {
+                                errors.push({
+                                    error: 'The length of ' + key + ' (' + fieldValue.length + ') is less than the minimum (' + value.min + ')',
+                                    interaction: current
+                                });
+                                areRulesOk = false;
+                        } else if (value.max !== undefined && fieldValue.length > value.max) {
+                                errors.push({
+                                    error: 'The length of ' + key + ' (' + fieldValue.length + ') is greater than the maximum (' + value.max + ')',
+                                    interaction: current
+                                });
+                                areRulesOk = false;
+                        }
                     }
                 }
             });

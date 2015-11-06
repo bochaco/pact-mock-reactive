@@ -13,3 +13,5 @@ sanjo:jasmine
 velocity:html-reporter
 cfs:standard-packages
 erasaur:meteor-lodash
+meteorhacks:npm
+npm-container
