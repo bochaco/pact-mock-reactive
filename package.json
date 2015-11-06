@@ -13,7 +13,9 @@
      "pacts",
      "server",
      "client",
-     "tests"
+     "tests",
+     "packages",
+     "packages.json"
   ],
   "scripts": {
     "start": "meteor run"
