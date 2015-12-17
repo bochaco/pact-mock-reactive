@@ -15,6 +15,25 @@ var NULL = 'NULL',
         }
     });
 
+// This function is used to convert json paths that have dashes and cannot be used by jsonpath.query
+// For example, it converts $.headers.content-type to $.headers["content-type"]
+function escapeDashesInJsonPath(path) {
+    var splitted = path.split(".");
+    escapedPath = "";
+    for (var i=0; i<splitted.length; i++) {
+        var key = splitted[i];
+        if (key.indexOf("-") === -1) {
+            if (i > 0) {
+                escapedPath += ".";
+            }
+            escapedPath += key;
+        } else {
+            escapedPath += '["' + key + '"]';
+        }
+    }
+    return escapedPath;
+}
+
 Meteor.startup(function () {
     // code to run on server at startup
     return;
@@ -22,6 +41,7 @@ Meteor.startup(function () {
 
 var pathNpm = Npm.require('path'),
     jsonpath = Meteor.npmRequire('jsonpath'),
+    querystring = Npm.require('querystring')
     appRoot = pathNpm.resolve('.');
 // find better way
 appRoot = appRoot.indexOf('.meteor') >= 0 ? appRoot.substring(0, appRoot.indexOf('.meteor')) : appRoot;
@@ -71,7 +91,6 @@ var fs = Npm.require('fs'),
 
         _.each(Interactions.find(mergedSelector).fetch(), function (matchingInteraction) {
             innerErr = [];
-
             // compare path of actual and expected, considering matching rules
             pathMatcher = _.get(matchingInteraction.interaction.request.requestMatchingRules, '$.path');
             if (useMatchers && pathMatcher && pathMatcher.regex) {
@@ -83,13 +102,31 @@ var fs = Npm.require('fs'),
                 return;
             }
 
+            // compare query of actual and expected, considering matching rules
+            if (process.env.CHECK_QUERIES !== "false") {
+                queryMatcher = _.get(matchingInteraction.interaction.request.requestMatchingRules, '$.query');
+                if (useMatchers && queryMatcher && queryMatcher.regex) {
+                    pattern = new RegExp(queryMatcher.regex);
+
+                    // if query was saved as object, and we need to match it with regex, encode it as string
+                    if (typeof query === "object") {
+                        query = querystring.encode(query)
+                    }
+
+                    if (!pattern.test(query)) {
+                        return
+                    }
+                } else if (!_.isEqual(matchingInteraction.interaction.request.query || {}, query || {})) {
+                    return
+                }
+            }
+
             // compare headers of actual and expected
             // iterate thru expected headers to make sure it's in the actual header
             _.each(matchingInteraction.interaction.request.headers, function (value, key) {
                 var actualHdr = headers[key], // when comparing headers defined in the pact interaction
                     actualHdrLower = headers[String(key).toLowerCase()], // when comparing with actual HTTP headers
                     hdrMatcher = _.get(matchingInteraction.interaction.request.requestMatchingRules, '$.headers.' + key);
-
                 if (useMatchers && hdrMatcher) {
                     if (hdrMatcher.regex) {
                         pattern = new RegExp(hdrMatcher.regex);
@@ -115,16 +152,6 @@ var fs = Npm.require('fs'),
                     }
                 }
             });
-
-            // compare query of actual and expected
-            if (!_.isEqual(matchingInteraction.interaction.request.query || {}, query || {})) {
-                innerErr.push({
-                    'query': {
-                        'expected': matchingInteraction.interaction.request.query,
-                        'actual': query
-                    }
-                });
-            }
 
             // compare body of actual and expected
             bodyMatcher = (function () {
@@ -195,6 +222,7 @@ var fs = Npm.require('fs'),
             newInteractions.push(req.body);
         }
         _.each(newInteractions, function (current) {
+
             var interaction = {
                     method : current.request.method,
                     path : current.request.path,
@@ -219,7 +247,7 @@ var fs = Npm.require('fs'),
 
             // make sure that the request matches any defined matching rule
             _.each(current.request.requestMatchingRules, function (value, key) {
-                var fieldValues = jsonpath.query(current.request, key);
+                var fieldValues = jsonpath.query(current.request, escapeDashesInJsonPath(key));
                 if (fieldValues.length === 0) {
                     errors.push({
                         error: 'The attribute ' + key + ' doesn\'t exist in the request object',
@@ -230,6 +258,10 @@ var fs = Npm.require('fs'),
                     for (var i=0; i<fieldValues.length; i++) {
                         fieldValue = fieldValues[i];
                         if (value.regex) {
+                            // special case for query
+                            if (key === "$.query" && typeof fieldValue === "object") {
+                                fieldValue = querystring.encode(fieldValue);
+                            }
                             if (!(new RegExp(value.regex)).test(fieldValue)) {
                                 errors.push({
                                     error: 'The value of ' + key + ' (' + fieldValue + ') doesn\'t match the defined regex rule in the request: ' + value.regex,
@@ -255,7 +287,7 @@ var fs = Npm.require('fs'),
             });
             // make sure that the response matches any defined matching rule
             _.each(current.response.responseMatchingRules, function (value, key) {
-                var fieldValues = jsonpath.query(current.response, key);
+                var fieldValues = jsonpath.query(current.response, escapeDashesInJsonPath(key));
                 if (fieldValues.length === 0) {
                     errors.push({
                         error: 'The attribute ' + key + ' doesn\'t exist in the response object',
