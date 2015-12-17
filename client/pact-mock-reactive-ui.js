@@ -168,8 +168,11 @@ Template.interaction.helpers({
         return this.disabled;
     },
     queryHelper: function (object) {
-        var str = $.param(object);
-        return str ? "?" + decodeURIComponent(str) : str;
+        var query = object;
+        if (query && typeof query === "object") {
+            query = $.param(query);
+        }
+        return query ? "?" + decodeURIComponent(query) : query;
     },
     jsonHelper: function (object) {
         return syntaxHighlight(JSON.stringify(object || {}, null, 4));
