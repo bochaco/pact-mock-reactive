@@ -89,6 +89,12 @@ var fs = Npm.require('fs'),
             pathMatcher,
             pattern;
 
+        // if query was saved as object, and we need to match it with regex, encode it as string
+        var queryForRegexComparison = query;
+        if (typeof queryForRegexComparison === "object") {
+            queryForRegexComparison = querystring.encode(queryForRegexComparison);
+        }
+
         _.each(Interactions.find(mergedSelector).fetch(), function (matchingInteraction) {
             innerErr = [];
             // compare path of actual and expected, considering matching rules
@@ -107,13 +113,7 @@ var fs = Npm.require('fs'),
                 queryMatcher = _.get(matchingInteraction.interaction.request.requestMatchingRules, '$.query');
                 if (useMatchers && queryMatcher && queryMatcher.regex) {
                     pattern = new RegExp(queryMatcher.regex);
-
-                    // if query was saved as object, and we need to match it with regex, encode it as string
-                    if (typeof query === "object") {
-                        query = querystring.encode(query)
-                    }
-
-                    if (!pattern.test(query)) {
+                    if (!pattern.test(queryForRegexComparison)) {
                         return
                     }
                 } else if (!_.isEqual(matchingInteraction.interaction.request.query || {}, query || {})) {
