@@ -34,6 +34,136 @@ function escapeDashesInJsonPath(path) {
     return escapedPath;
 }
 
+// The convertAllMatchers* functions are used to convert ruby style matchers present in the
+// incoming interactions to jsonpath style matchers
+
+function convertAllMatchersInArray(array, matchingRules, path) {
+    for (var i=0; i<array.length; i++) {
+        var item = array[i];
+        if (Array.isArray(item)) {
+            convertAllMatchersInArray(item, matchingRules, path + '[' + i + ']');
+        } else if (typeof item === 'object') {
+            array[i] = convertAllMatchersInObj(item, matchingRules, path + '[' + i + ']');
+        }
+    }
+}
+
+function convertAllMatchers(rootObject, matchingRules, path) {
+    if (path === undefined) {
+        path = '$';
+    }
+
+    if (matchingRules === undefined) {
+        console.log('WARN: matchingRules should not be undefined');
+        matchingRules = {};
+    }
+    if (typeof rootObject === 'object') {
+        if (Array.isArray(rootObject)) {
+            convertAllMatchersInArray(rootObject, matchingRules, path);
+        } else if (rootObject.json_class === 'Pact::Term' || rootObject.json_class === 'Pact::SomethingLike' || rootObject.json_class === 'Pact::ArrayLike') {
+            rootObject = convertAllMatchersInObj(rootObject, matchingRules, path);
+        } else {
+            for (var key in rootObject) {
+                if (rootObject.hasOwnProperty(key)) {
+                    var value = rootObject[key];
+                    if (Array.isArray(value)) {
+                        convertAllMatchersInArray(value, matchingRules, path + '.' + key);
+                    }
+                    else if (value && typeof value === 'object') {
+                        if (value.json_class === 'Pact::Term') {
+                            if (value.data && value.data.matcher && value.data.matcher.json_class === 'Regexp') {
+                                var regex = value.data.matcher.s;
+                                rootObject[key] = value.data.generate;
+                                matchingRules[path + '.' + key] = {'regex': regex};
+                            }
+                        }
+                        else if (value.json_class === 'Pact::SomethingLike') {
+                            rootObject[key] = value.contents;
+                            matchingRules[path + '.' + key] = {'match': 'type'};
+                        }
+                        else if (value.json_class === 'Pact::ArrayLike') {
+                            matchingRules[path + '.' + key] = {'min': value.min};
+                            var itemsCount = value.min;
+                            var item = value.contents;
+                            if (!item || typeof item !== 'object') {
+                                matchingRules[path + '.' + key + '[*]'] = {'match': 'type'};
+                            } else {
+                                if (item.json_class === 'Pact::Term' || item.json_class === 'Pact::SomethingLike' || item.json_class === 'Pact::ArrayLike') {
+                                    item = convertAllMatchersInObj(item, matchingRules, path + '[*]');
+                                }
+                                for (var prop in item) {
+                                    if (item.hasOwnProperty(prop)) {
+                                        var childItem = item[prop];
+                                        if (childItem && typeof childItem === 'object') {
+                                            item[prop] = convertAllMatchersInObj(childItem, matchingRules, path + '.' + key + '[*].' + prop);
+                                        }
+                                    }
+                                }
+                            }
+                            rootObject[key] = [];
+                            for (var i=0; i<itemsCount; i++) {
+                                rootObject[key].push(item);
+                            }
+                        }
+                        else {
+                            convertAllMatchers(value, matchingRules, path + '.' + key);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return rootObject;
+}
+
+
+function convertAllMatchersInObj(value, matchingRules, path) {
+    var convertedValue = value;
+    if (value && typeof value === 'object') {
+        if (value.json_class === 'Pact::Term') {
+            if (value.data && value.data.matcher && value.data.matcher.json_class === 'Regexp') {
+                var regex = value.data.matcher.s;
+                convertedValue = value.data.generate;
+                matchingRules[path] = {'regex': regex};
+            }
+        }
+        else if (value.json_class === 'Pact::SomethingLike') {
+            convertedValue = value.contents;
+            matchingRules[path] = {'match': 'type'};
+        }
+        else if (value.json_class === 'Pact::ArrayLike') {
+            matchingRules[path] = {'min': value.min};
+            var itemsCount = value.min;
+            var item = value.contents;
+            if (!item || typeof item !== 'object') {
+                matchingRules[path + '[*]'] = {'match': 'type'};
+            } else {
+                if (item.json_class === 'Pact::Term' || item.json_class === 'Pact::SomethingLike' || item.json_class === 'Pact::ArrayLike') {
+                    item = convertAllMatchersInObj(item, matchingRules, path + '[*]');
+                }
+                for (var prop in item) {
+                    if (item.hasOwnProperty(prop)) {
+                        var childItem = item[prop];
+                        if (childItem && typeof childItem === 'object') {
+                            item[prop] = convertAllMatchersInObj(childItem, matchingRules, path + '[*].' + prop);
+                        }
+                    }
+                }
+            }
+            convertedValue = [];
+            for (var i=0; i<itemsCount; i++) {
+                convertedValue.push(item);
+            }
+        }
+        else {
+            convertedValue = convertAllMatchers(value, matchingRules, path);
+        }
+    }
+    return convertedValue;
+}
+
+
+
 Meteor.startup(function () {
     // code to run on server at startup
     return;
@@ -109,6 +239,8 @@ var fs = Npm.require('fs'),
             }
 
             // compare query of actual and expected, considering matching rules
+            // TODO: Implement query comparison when query is an object and matchers could be used
+            // on each query parameter (query object property)
             if (process.env.CHECK_QUERIES !== "false") {
                 queryMatcher = _.get(matchingInteraction.interaction.request.requestMatchingRules, '$.query');
                 if (useMatchers && queryMatcher && queryMatcher.regex) {
@@ -222,6 +354,25 @@ var fs = Npm.require('fs'),
             newInteractions.push(req.body);
         }
         _.each(newInteractions, function (current) {
+            if (process.env.CONVERT_MATCHING_RULES !== "false") {
+                current.request.requestMatchingRules = current.request.requestMatchingRules || {};
+                current.response.responseMatchingRules = current.response.responseMatchingRules || {};
+
+                current.request.body = convertAllMatchers(current.request.body, current.request.requestMatchingRules, '$.body');
+                current.request.query = convertAllMatchers(current.request.query, current.request.requestMatchingRules, '$.query');
+                current.request.headers = convertAllMatchers(current.request.headers, current.request.requestMatchingRules, '$.headers');
+
+                current.response.body = convertAllMatchers(current.response.body, current.response.responseMatchingRules, '$.body');
+                current.response.headers = convertAllMatchers(current.response.headers, current.response.responseMatchingRules, '$.headers');
+
+                if (current.request.requestMatchingRules !== undefined && _.isEmpty(current.request.requestMatchingRules)) {
+                    delete current.request.requestMatchingRules;
+                }
+
+                if (current.response.responseMatchingRules !== undefined && _.isEmpty(current.response.responseMatchingRules)) {
+                    delete current.response.responseMatchingRules;
+                }
+            }
 
             var interaction = {
                     method : current.request.method,
@@ -410,6 +561,14 @@ var fs = Npm.require('fs'),
                 }
             };
         _.each(interactions, function (element) {
+            // Even though the client supports sending queries as objects or as strings, the maven plugin that verifies the contract
+            // fails if queries are object, so we convert it here to string. This behavior may be disabled by setting the QUERIES_ONLY_AS_STRING
+            // environment variable to "false"
+            if (process.env.QUERIES_ONLY_AS_STRING !== "false") {
+                if (element.interaction.request && element.interaction.request.query && typeof element.interaction.request.query === "object") {
+                    element.interaction.request.query = querystring.encode(element.interaction.request.query);
+                }
+            }
             pact.interactions.push(element.interaction);
         });
         return pact;
