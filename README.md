@@ -18,6 +18,8 @@ The mock service provides the following HTTP endpoints in the backend:
 * GET /interactions/verification - determine whether the expected interactions have taken place
 * POST /pact - write the pact file
 
+You can send HTTP requests using any HTTP client like Postman. You can download a Postman collection from [here](https://github.com/bochaco/pact-mock-reactive/blob/master/doc/Pact-Mock.json.postman_collection) which contains a set of sample requests to add interactions, verify them, delete them and to write the pact file.
+
 **Note that pact file format is compatible with [Pact JVM][pact-jvm].**
 
 As the Pact mock service can be used as a standalone executable and administered via HTTP, it can be used for testing with any language. All that is required is just a library in the native language to create the HTTP calls listed above. Currently there are binding for [Ruby][pact] and [Javascript][javascript].
