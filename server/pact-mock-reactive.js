@@ -2,7 +2,13 @@ _ = lodash;
 
 var NULL = 'NULL',
     escapeMetaCharacters = function (string) {
-        return string.replace(/\$/g, '\\uff04').replace(/\./g, '\\uff0E');
+        string = string.replace(/\$/g, '\\uff04').replace(/\./g, '\\uff0E');
+        //NOTE: this method is a workaround for mongo not allowing certain characters in the keys
+        //however, the method replaces all the characters in both keys and values. This causes the
+        //issue that float values will be escaped, making the json string invalid and parse fails.
+        //As a workaround for the workaround I unescape the float values in the string with a regex
+        //I could not find an easy way to escape only the keys... :(
+        return string.replace(/(":\d+)\\uff0E(\d+)/g, '$1.$2')
     },
     unescapeMetaCharacters = function (string) {
         return string.replace(/\uff04/g, '$').replace(/\uff0E/g, '.');
